@@ -1,0 +1,23 @@
+# ------------------------------------------------
+# Copy this file to the same directory as: application.yaml
+# Fill in your real secrets/credentials in application.yaml only.
+# Do NOT commit your application.properties. It is already ignored by .gitignore.
+# Path: src/main/resources/application.properties
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: UniPapers-Backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ticketguy}
+    username: ${DB_USERNAME:your_username}
+    password: ${DB_PASSWORD:your_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
