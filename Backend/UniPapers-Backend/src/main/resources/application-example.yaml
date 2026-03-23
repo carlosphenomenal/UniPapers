@@ -21,3 +21,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+
+cloudflare:
+  r2:
+    account-id: your-account-id          # From Cloudflare dashboard
+    access-key: your-r2-access-key-id
+    secret-key: your-r2-secret-access-key
+    bucket-name: your-bucket-name
+    public-url: https://pub-xxxx.r2.dev     # Public bucket URL for serving files
