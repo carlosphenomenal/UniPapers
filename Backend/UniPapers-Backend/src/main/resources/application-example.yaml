@@ -13,7 +13,7 @@ spring:
   application:
     name: UniPapers-Backend
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/ticketguy}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/unipapers}
     username: ${DB_USERNAME:your_username}
     password: ${DB_PASSWORD:your_password}
     driver-class-name: org.postgresql.Driver
