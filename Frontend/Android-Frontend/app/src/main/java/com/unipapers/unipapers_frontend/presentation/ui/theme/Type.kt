@@ -1,4 +1,4 @@
-package com.unipapers.unipapers_frontend.ui.theme
+package com.unipapers.unipapers_frontend.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
