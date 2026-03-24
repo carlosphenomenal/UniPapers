@@ -1,12 +1,13 @@
 package com.unipapers.backend.Modules.FileManagement.Controllers;
 
 import com.unipapers.backend.Configurations.Cloudflare.R2Properties;
+import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
+import com.unipapers.backend.Modules.FileManagement.Services.FileUploadService;
 import com.unipapers.backend.Utils.R2StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
@@ -21,14 +22,19 @@ public class FileController {
 
     private final R2StorageService storageService;
     private final R2Properties props;
+    private final FileUploadService fileUploadService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> upload(
-            @RequestParam("file") MultipartFile file) throws IOException {
+    @PostMapping("/init-upload")
+    public ResponseEntity<?> initializeUploadFile(@RequestBody FileUploadDto fileUploadDto) throws IOException {
+        return ResponseEntity.ok(fileUploadService.initializeUploadFile(fileUploadDto));
+    }
 
-        String key = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String url = storageService.upload(file, key);
-        return ResponseEntity.ok(Map.of("key", key, "url", url));
+    // This endpoint can be used to confirm the upload after the frontend has uploaded the file to the bucket using the pre-signed URL.
+    // You can use this endpoint to update the database record associated with the past paper, marking it as "uploaded"
+    @PutMapping("/confirm-upload/{pastPaperPublicId}")
+    public ResponseEntity<?> confirmUpload(@PathVariable String pastPaperPublicId) {
+        fileUploadService.markAsUploaded(pastPaperPublicId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/presign-upload")

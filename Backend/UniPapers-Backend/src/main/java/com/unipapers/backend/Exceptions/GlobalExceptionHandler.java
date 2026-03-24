@@ -1,5 +1,6 @@
 package com.unipapers.backend.Exceptions;
 
+import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Exceptions.Models.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,25 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(CourseNotFoundException.class)
+    public ResponseEntity<ApiError> handleCourseNotFoundException(
+            CourseNotFoundException ex,
+            HttpServletRequest request
+    ) {
 
+        ApiError error = new ApiError(
+                Instant.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                UUID.randomUUID().toString()
+        );
+
+        // Log the error message internally
+        log.warn("Course not found: {}", ex.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
 
 }

@@ -1,13 +1,16 @@
 package com.unipapers.backend.Modules.FileManagement.Models;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "topics")
 public class Topic {
@@ -29,5 +32,12 @@ public class Topic {
 
     @Column(nullable = false, unique = true)
     private String topicName;
+
+    @PrePersist
+    public void generateUlid() {
+        if (publicId == null) {
+            publicId = UlidCreator.getUlid().toString();
+        }
+    }
 
 }

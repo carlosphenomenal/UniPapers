@@ -2,8 +2,10 @@ package com.unipapers.backend.Modules.FileManagement.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
+import com.unipapers.backend.Modules.FileManagement.Enums.UploadStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,8 +15,12 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
-@Table(name = "past_papers")
+@Table(name = "past_papers", indexes = {
+        @Index(name = "idx_past_paper_public_id", columnList = "publicId"),
+        @Index(name = "idx_past_paper_course_id", columnList = "course_id"),
+})
 public class PastPaper {
 
     @Id
@@ -37,7 +43,10 @@ public class PastPaper {
 
     private int semester;
 
-    private String fileUrl;
+    private String fileBucketName;
+
+    @Enumerated(EnumType.STRING)
+    private UploadStatus uploadStatus;
 
     @OneToMany(mappedBy = "pastPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Topic> topics;
@@ -63,6 +72,8 @@ public class PastPaper {
         // Set the addedAt and updatedAt timestamps
         addedAt = Instant.now();
         updatedAt = Instant.now();
+        // Set the default upload status to PENDING when a new past paper is created
+        uploadStatus = UploadStatus.PENDING;
     }
 
     @PreUpdate

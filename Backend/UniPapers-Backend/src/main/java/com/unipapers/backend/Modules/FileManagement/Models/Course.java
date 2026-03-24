@@ -12,7 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "courses")
+@Table(name = "courses", indexes = {
+        @Index(name = "idx_course_public_id", columnList = "publicId"),
+        @Index(name = "idx_course_code", columnList = "courseCode"),
+        @Index(name = "idx_course_name", columnList = "courseName")
+})
 public class Course {
 
     @Id
