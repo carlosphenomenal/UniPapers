@@ -43,7 +43,7 @@ class FileUploadViewModel @Inject constructor(
             coursePublicId = coursePublicId.value,
             courseName = courseName.value,
             fileName = fileName.value,
-            type = type.value,
+            pastPaperType = type.value,
             academicYear = academicYear.value,
             yearOfStudy = yearOfStudy.intValue,
             semester = semester.intValue,

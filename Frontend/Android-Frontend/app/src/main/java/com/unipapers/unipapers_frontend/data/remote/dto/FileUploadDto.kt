@@ -6,7 +6,7 @@ data class FileUploadDto(
     @SerializedName("coursePublicId") val coursePublicId: String,
     @SerializedName("courseName") val courseName: String,
     @SerializedName("fileName") val fileName: String,
-    @SerializedName("type") val type: String,
+    @SerializedName("pastPaperType") val pastPaperType: String,
     @SerializedName("academicYear") val academicYear: String,
     @SerializedName("yearOfStudy") val yearOfStudy: Int,
     @SerializedName("semester") val semester: Int,
