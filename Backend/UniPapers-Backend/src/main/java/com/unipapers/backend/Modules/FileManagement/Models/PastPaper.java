@@ -3,6 +3,7 @@ package com.unipapers.backend.Modules.FileManagement.Models;
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
 import com.unipapers.backend.Modules.FileManagement.Enums.UploadStatus;
+import com.unipapers.backend.Modules.FileManagement.Enums.VerificationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,8 +46,13 @@ public class PastPaper {
 
     private String fileBucketName;
 
+    private String fileHash;
+
     @Enumerated(EnumType.STRING)
     private UploadStatus uploadStatus;
+
+    @Enumerated(EnumType.STRING)
+    private VerificationStatus verificationStatus;
 
     @OneToMany(mappedBy = "pastPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Topic> topics;

@@ -16,7 +16,8 @@ public class FileUploadDto {
     private String coursePublicId;
     private String courseName;
     private String fileName;
-    private String type;
+    private String fileHash;
+    private String pastPaperType;
     private String academicYear;
     private int yearOfStudy;
     private int semester;

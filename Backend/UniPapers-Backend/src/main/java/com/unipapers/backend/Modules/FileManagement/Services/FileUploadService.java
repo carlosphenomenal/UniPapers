@@ -2,9 +2,12 @@ package com.unipapers.backend.Modules.FileManagement.Services;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
+import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperAlreadyExistsByHashException;
+import com.unipapers.backend.Exceptions.CustomExceptions.UnverifiedPastPapersLimitExceededException;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
+import com.unipapers.backend.Modules.FileManagement.Enums.VerificationStatus;
 import com.unipapers.backend.Modules.FileManagement.Models.Course;
 import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
 import com.unipapers.backend.Modules.FileManagement.Models.Topic;
@@ -34,6 +37,25 @@ public class FileUploadService {
     @Transactional
     public FileUploadResponseDto initializeUploadFile(FileUploadDto fileUploadDto) throws BadRequestException {
 
+        // Check if a file with the same hash already exists
+        if (pastPaperRepo.existsByFileHash(fileUploadDto.getFileHash())) {
+            throw new PastPaperAlreadyExistsByHashException("A file with the same hash already exists");
+        }
+
+        // If there are already 10 unverified past papers with the same metadata, reject the upload to prevent spamming the system with similar unverified past papers.
+        if (countUnverifiedWithSameMetadata(fileUploadDto) >= 10) {
+            throw new UnverifiedPastPapersLimitExceededException("The number of unverified past papers with the same metadata is already beyond the threshold. Please try uploading a different past paper.");
+        }
+
+        // Handle past paper type to ensure that the correct type has been provided and to convert the string value to the corresponding enum value.
+        // If the provided type is invalid, an exception will be thrown.
+        PastPaperType type;
+        try {
+            type = PastPaperType.valueOf(fileUploadDto.getPastPaperType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid past paper type: " + fileUploadDto.getPastPaperType());
+        }
+
         //Fetch the associated course
         Course course = courseRepo.findByPublicId(fileUploadDto.getCoursePublicId())
                 .orElseThrow(() -> new CourseNotFoundException("Course for id " + fileUploadDto.getCoursePublicId() + " not found"));
@@ -46,21 +68,12 @@ public class FileUploadService {
             throw new BadRequestException("Academic year is required");
         }
 
-        // Generate object key to be used to store the file in the bucket
+        // Generate the object key to be used to store the file in the bucket
         String key = generateKey(
                 fileUploadDto.getFileName(),
                 course.getCourseName(),
                 fileUploadDto.getAcademicYear()
         );
-
-        // Handle past paper type
-        PastPaperType type;
-        try {
-            type = PastPaperType.valueOf(fileUploadDto.getType().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid past paper type: " + fileUploadDto.getType());
-        }
-
 
         // Create a past paper object
         PastPaper pastPaper = PastPaper.builder()
@@ -70,6 +83,8 @@ public class FileUploadService {
                 .yearOfStudy(fileUploadDto.getYearOfStudy())
                 .semester(fileUploadDto.getSemester())
                 .fileBucketName(key)
+                .fileHash(fileUploadDto.getFileHash())
+                .verificationStatus(VerificationStatus.UNVERIFIED)
                 .build();
 
         // Save the past paper to the db
@@ -96,8 +111,8 @@ public class FileUploadService {
         // Create the signed URL for the client to upload the file directly to the bucket
         String signedUrl = r2StorageService.presignedUploadUrl(
                 key,
-                "application/pdf",  //set content type to PDF since we only accept PDF files
-                Duration.ofMinutes(5)          // 5 minutes expiry
+                "application/pdf",  //set the content type to PDF since we only accept PDF files
+                Duration.ofMinutes(5)          // 5-minute expiry
         );
 
         return FileUploadResponseDto.builder()
@@ -177,6 +192,16 @@ public class FileUploadService {
     private static String generateId() {
         // Generate ULID
         return UlidCreator.getUlid().toString();
+    }
+
+    private long countUnverifiedWithSameMetadata(FileUploadDto fileUploadDto){
+        return pastPaperRepo.countUnverifiedByMetadata(
+                fileUploadDto.getCourseName(),
+                fileUploadDto.getAcademicYear(),
+                fileUploadDto.getYearOfStudy(),
+                fileUploadDto.getSemester(),
+                PastPaperType.valueOf(fileUploadDto.getPastPaperType().toUpperCase())
+        );
     }
 
 }
