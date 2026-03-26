@@ -1,4 +1,4 @@
-package com.unipapers.unipapers_frontend.feature.upload.data.datasource
+package com.unipapers.unipapers_frontend.feature.upload.domain.model
 
 import com.google.gson.annotations.SerializedName
 
