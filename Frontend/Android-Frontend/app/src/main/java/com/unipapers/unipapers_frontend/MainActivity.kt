@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.unipapers.unipapers_frontend.presentation.ui.theme.UniPapersTheme
+import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
 
 import dagger.hilt.android.AndroidEntryPoint
 
