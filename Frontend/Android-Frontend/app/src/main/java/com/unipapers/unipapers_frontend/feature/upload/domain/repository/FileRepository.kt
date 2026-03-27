@@ -1,6 +1,6 @@
 package com.unipapers.unipapers_frontend.feature.upload.domain.repository
 
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileUploadDto
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadDto
 import java.io.File
 
 interface FileRepository {

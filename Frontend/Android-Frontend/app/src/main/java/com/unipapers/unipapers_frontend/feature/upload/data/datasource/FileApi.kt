@@ -1,7 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.upload.data.datasource
 
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileUploadDto
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileUploadResponseDto
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadDto
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST

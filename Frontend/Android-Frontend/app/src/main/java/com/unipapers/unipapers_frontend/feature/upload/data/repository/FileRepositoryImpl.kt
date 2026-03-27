@@ -2,7 +2,7 @@ package com.unipapers.unipapers_frontend.feature.upload.data.repository
 
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileApi
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileUploadDto
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadDto
 import com.unipapers.unipapers_frontend.feature.upload.domain.repository.FileRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
