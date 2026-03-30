@@ -9,4 +9,5 @@ sealed class Screen(val route: String) {
     // Add other screens as needed, e.g., PaperDetail
     object Login : Screen("login")
     object Register : Screen("register")
+    object Upload : Screen("upload")
 }

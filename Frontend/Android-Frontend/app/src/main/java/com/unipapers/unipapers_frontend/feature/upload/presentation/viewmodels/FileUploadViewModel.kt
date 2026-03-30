@@ -1,5 +1,6 @@
 package com.unipapers.unipapers_frontend.feature.upload.presentation.viewmodels
 
+import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -7,30 +8,42 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadDto
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.GeminiResult
+import com.unipapers.unipapers_frontend.feature.upload.domain.usecase.SuggestTagsUseCase
 import com.unipapers.unipapers_frontend.feature.upload.domain.usecase.UploadFileUseCase
 import com.unipapers.unipapers_frontend.feature.upload.utils.FileHashUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
-sealed class UploadState {
-    object Idle : UploadState()
-    object Hashing : UploadState()
-    object Loading : UploadState()
-    data class Success(val message: String) : UploadState()
-    data class Error(val message: String) : UploadState()
+sealed class UploadStatus {
+    object Idle : UploadStatus()
+    object Hashing : UploadStatus()
+    object Loading : UploadStatus()
+    data class Success(val message: String) : UploadStatus()
+    data class Error(val message: String) : UploadStatus()
 }
 
 @HiltViewModel
 class FileUploadViewModel @Inject constructor(
-    private val uploadFileUseCase: UploadFileUseCase
+    private val uploadFileUseCase: UploadFileUseCase,
+    private val suggestTagsUseCase: SuggestTagsUseCase
 ) : ViewModel() {
 
-    private val _state = mutableStateOf<UploadState>(UploadState.Idle)
-    val state: State<UploadState> = _state
+    private val _status = mutableStateOf<UploadStatus>(UploadStatus.Idle)
+    val status: State<UploadStatus> = _status
+
+    private val _state = MutableStateFlow(UploadState())
+    val uiState = _state.asStateFlow()
+
+    private var geminiJob: Job? = null
 
     // Form data states
     val coursePublicId = mutableStateOf("")
@@ -42,20 +55,26 @@ class FileUploadViewModel @Inject constructor(
     val semester = mutableIntStateOf(1)
     val topicsNames = mutableStateListOf<String>()
 
+    fun onFileSelected(uri: Uri, name: String, size: String) {
+        _state.update { it.copy(
+            selectedFileUri = uri,
+            selectedFileName = name,
+            selectedFileSize = size
+        ) }
+    }
+
     fun uploadFile(file: File) {
         viewModelScope.launch {
-            // Compute the hash on the IO thread so the UI stays responsive
-            _state.value = UploadState.Hashing
+            _status.value = UploadStatus.Hashing
             val fileHash = withContext(Dispatchers.IO) {
                 FileHashUtil.sha256(file)
             }
 
             if (fileHash == null) {
-                _state.value = UploadState.Error("Could not read the file. Please try again.")
+                _status.value = UploadStatus.Error("Could not read the file. Please try again.")
                 return@launch
             }
 
-            // Build the DTO
             val fileUploadDto = FileUploadDto(
                 coursePublicId = coursePublicId.value,
                 courseName = courseName.value,
@@ -68,32 +87,99 @@ class FileUploadViewModel @Inject constructor(
                 topicsNames = topicsNames.toList()
             )
 
-            // Hand off to the use-case
-            _state.value = UploadState.Loading
+            _status.value = UploadStatus.Loading
             uploadFileUseCase(fileUploadDto, file)
                 .onSuccess {
-                    _state.value = UploadState.Success("File uploaded and confirmed successfully!")
+                    _status.value = UploadStatus.Success("File uploaded and confirmed successfully!")
                 }
                 .onFailure { error ->
-                    _state.value = UploadState.Error(
+                    _status.value = UploadStatus.Error(
                         error.localizedMessage ?: "An unknown error occurred"
                     )
                 }
         }
     }
 
-
     fun addTopic(topicName: String) {
-        if (topicName.isNotBlank()) {
+        if (topicName.isNotBlank() && !topicsNames.contains(topicName)) {
             topicsNames.add(topicName)
+            _state.update { it.copy(confirmedTags = it.confirmedTags + topicName) }
         }
     }
 
     fun removeTopic(topicName: String) {
         topicsNames.remove(topicName)
+        _state.update { it.copy(confirmedTags = it.confirmedTags - topicName) }
+    }
+
+    fun toggleTag(tag: String) {
+        _state.update { current ->
+            if (current.confirmedTags.contains(tag)) {
+                topicsNames.remove(tag)
+                current.copy(confirmedTags = current.confirmedTags - tag)
+            } else {
+                topicsNames.add(tag)
+                current.copy(confirmedTags = current.confirmedTags + tag)
+            }
+        }
     }
 
     fun resetState() {
-        _state.value = UploadState.Idle
+        _status.value = UploadStatus.Idle
+    }
+
+    fun onStep1Next() {
+        val uri = _state.value.selectedFileUri ?: return
+        _state.update { it.copy(currentStep = 2) }
+        startGeminiAnalysis(uri)
+    }
+
+    fun nextStep() {
+        _state.update { it.copy(currentStep = it.currentStep + 1) }
+    }
+
+    fun previousStep() {
+        _state.update { it.copy(currentStep = it.currentStep - 1) }
+    }
+    
+
+    private fun startGeminiAnalysis(uri: Uri) {
+        geminiJob?.cancel()
+        _state.update { it.copy(isLoadingTags = true, tagError = null) }
+
+        geminiJob = viewModelScope.launch {
+            when (val result = suggestTagsUseCase(uri)) {
+                is GeminiResult.Success -> {
+                    val tags = result.response.topicTags
+                    _state.update { current ->
+                        current.copy(
+                            isLoadingTags = false,
+                            suggestedTags = tags,
+                            confirmedTags = tags.toSet(),
+                            geminiMetadata = result.response.metadata,
+                            tagError = null
+                        )
+                    }
+                    // Sync topicsNames list
+                    topicsNames.clear()
+                    topicsNames.addAll(tags)
+                    
+                    // Auto-fill metadata if confident
+                    if (result.response.confidence == "high") {
+                        result.response.metadata.courseName?.let { courseName.value = it }
+                        result.response.metadata.academicYear?.let { academicYear.value = it }
+                    }
+                }
+                is GeminiResult.Error -> {
+                    _state.update {
+                        it.copy(
+                            isLoadingTags = false,
+                            suggestedTags = emptyList(),
+                            tagError = "Could not extract tags automatically. Add them manually."
+                        )
+                    }
+                }
+            }
+        }
     }
 }
