@@ -32,6 +32,10 @@ public class Course {
     @Column(nullable = false, unique = true)
     private String courseName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "program_id")
+    private Program program;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<PastPaper> pastPaper;
 
