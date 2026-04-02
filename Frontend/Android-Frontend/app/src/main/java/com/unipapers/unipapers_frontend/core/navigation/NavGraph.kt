@@ -6,14 +6,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.upload.presentation.UploadFlowScreen
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    toastManager: ToastManager,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -33,6 +35,12 @@ fun NavGraph(
         composable(Screen.Profile.route) {
             PlaceholderScreen("Profile Screen")
         }
+        composable(Screen.Upload.route) {
+            UploadFlowScreen(
+                onBackClick = { navController.popBackStack() },
+                toastManager = toastManager
+            )
+        }
     }
 }
 
@@ -45,4 +53,3 @@ fun PlaceholderScreen(name: String) {
         Text(text = name)
     }
 }
-

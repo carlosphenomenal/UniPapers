@@ -1,7 +1,7 @@
 # Gradle files
 .gradle/
 gradle/
-gradle.properties
+# gradle.properties
 gradlew
 gradlew.bat
 
