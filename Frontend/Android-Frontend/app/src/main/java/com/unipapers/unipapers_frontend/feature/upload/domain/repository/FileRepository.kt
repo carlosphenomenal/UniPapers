@@ -5,4 +5,6 @@ import java.io.File
 
 interface FileRepository {
     suspend fun uploadFile(fileUploadDto: FileUploadDto, file: File): Result<Unit>
+    suspend fun downloadFile(pastPaperPublicId: String): Result<Unit>
+
 }
