@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.FileManagement.Controllers;
 
 import com.unipapers.backend.Configurations.Cloudflare.R2Properties;
+import com.unipapers.backend.Modules.FileManagement.Dtos.FileDownloadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
 import com.unipapers.backend.Modules.FileManagement.Services.FileUploadService;
 import com.unipapers.backend.Utils.R2StorageService;
@@ -10,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
@@ -69,7 +69,14 @@ public class FileController {
 
     @GetMapping("/presign/{key}")
     public ResponseEntity<String> presign(@PathVariable String key) {
-        URL url = storageService.presignedUrl(key, Duration.ofMinutes(15));
-        return ResponseEntity.ok(url.toString());
+        String url = storageService.presignedDownloadUrl(key, Duration.ofMinutes(15));
+        return ResponseEntity.ok(url);
+    }
+
+    @GetMapping("/presign-download/{pastPaperPublicId}")
+    public ResponseEntity<FileDownloadResponseDto> presignDownloadByPastPaperPublicId(
+            @PathVariable String pastPaperPublicId
+    ) {
+        return ResponseEntity.ok(fileUploadService.getPresignedDownloadByPublicId(pastPaperPublicId));
     }
 }

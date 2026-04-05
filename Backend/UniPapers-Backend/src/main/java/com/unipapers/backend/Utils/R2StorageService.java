@@ -17,7 +17,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 
@@ -97,7 +96,7 @@ public class R2StorageService {
     }
 
     /** Generate a pre-signed URL (for private buckets) */
-    public URL presignedUrl(String key, Duration expiry) {
+    public String presignedDownloadUrl(String key, Duration expiry) {
         try (S3Presigner presigner = S3Presigner.builder()
                 .endpointOverride(URI.create(
                         "https://" + props.getAccountId() + ".r2.cloudflarestorage.com"
@@ -113,7 +112,7 @@ public class R2StorageService {
                             .getObjectRequest(g -> g.bucket(props.getBucketName()).key(key))
             );
 
-            return presigned.url();
+            return presigned.url().toString();
         }
     }
 

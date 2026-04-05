@@ -7,7 +7,11 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface PastPaperRepo extends JpaRepository<PastPaper, Long> {
+
+    Optional<PastPaper> findByPublicId(String publicId);
 
     @Modifying
     @Query("UPDATE PastPaper p SET p.uploadStatus = 'UPLOADED' WHERE p.publicId = :publicId")

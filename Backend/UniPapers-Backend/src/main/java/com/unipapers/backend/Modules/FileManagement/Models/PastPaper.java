@@ -44,7 +44,7 @@ public class PastPaper {
 
     private int semester;
 
-    private String fileBucketName;
+    private String key;
 
     private String fileHash;
 

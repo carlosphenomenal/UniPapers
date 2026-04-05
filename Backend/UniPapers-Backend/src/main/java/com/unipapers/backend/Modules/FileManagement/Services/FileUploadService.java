@@ -3,7 +3,9 @@ package com.unipapers.backend.Modules.FileManagement.Services;
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperAlreadyExistsByHashException;
+import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.UnverifiedPastPapersLimitExceededException;
+import com.unipapers.backend.Modules.FileManagement.Dtos.FileDownloadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
@@ -82,7 +84,7 @@ public class FileUploadService {
                 .academicYear(fileUploadDto.getAcademicYear())
                 .yearOfStudy(fileUploadDto.getYearOfStudy())
                 .semester(fileUploadDto.getSemester())
-                .fileBucketName(key)
+                .key(key)
                 .fileHash(fileUploadDto.getFileHash())
                 .verificationStatus(VerificationStatus.UNVERIFIED)
                 .build();
@@ -130,6 +132,19 @@ public class FileUploadService {
             throw new EntityNotFoundException("PastPaper not found with publicId: " + pastPaperPublicId);
         }
 
+    }
+
+    public FileDownloadResponseDto getPresignedDownloadByPublicId(String pastPaperPublicId) {
+        PastPaper pastPaper = pastPaperRepo.findByPublicId(pastPaperPublicId)
+                .orElseThrow(() -> new PastPaperNotFoundException("PastPaper not found with publicId: " + pastPaperPublicId));
+
+        String key = pastPaper.getKey();
+        if (key == null || key.isBlank()) {
+            throw new PastPaperNotFoundException("File key not found for pastPaper publicId: " + pastPaperPublicId);
+        }
+
+        String signedUrl = r2StorageService.presignedDownloadUrl(key, Duration.ofMinutes(5));
+        return new FileDownloadResponseDto(key, signedUrl);
     }
 
     //======== HELPER METHODS =======//
