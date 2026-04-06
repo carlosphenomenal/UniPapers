@@ -11,16 +11,26 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileApi
+import com.unipapers.unipapers_frontend.feature.upload.domain.model.DownloadTrack
 import com.unipapers.unipapers_frontend.feature.upload.domain.model.FileUploadDto
 import com.unipapers.unipapers_frontend.feature.upload.domain.repository.FileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
+import androidx.core.content.edit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 class FileRepositoryImpl @Inject constructor(
     private val fileApi: FileApi,
@@ -28,8 +38,17 @@ class FileRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) : FileRepository {
     companion object {
-        val activeDownloadIds = mutableListOf<Long>()
+        private const val DOWNLOAD_TRACKING_PREFS = "download_tracking_prefs"
+        private const val ACTIVE_DOWNLOADS_KEY = "active_downloads"
+        private val isPolling = AtomicBoolean(false)
+        val activeDownloads = mutableListOf<DownloadTrack>()
     }
+
+    init {
+        restorePersistedDownloads()
+        refreshPersistedDownloadStates()
+    }
+
     override suspend fun uploadFile(fileUploadDto: FileUploadDto, file: File): Result<Unit> {
         return try {
             // Initialize upload
@@ -107,10 +126,26 @@ class FileRepositoryImpl @Inject constructor(
                 ?: return Result.failure(IllegalStateException("DownloadManager service is unavailable"))
 
             enqueuedDownloadId = downloadManager.enqueue(request)
-            activeDownloadIds.add(enqueuedDownloadId)
+            val now = System.currentTimeMillis()
+            upsertTrackedDownload(
+                DownloadTrack(
+                    downloadId = enqueuedDownloadId,
+                    pastPaperPublicId = pastPaperPublicId,
+                    fileName = fileName,
+                    destinationUri = createdUri.toString(),
+                    statusCode = DownloadManager.STATUS_PENDING,
+                    progressPercent = 0,
+                    downloadedBytes = 0L,
+                    totalBytes = -1L,
+                    reasonCode = null,
+                    createdAtMillis = now,
+                    updatedAtMillis = now
+                )
+            )
 
-            //TODO: Handle download progress
-            //TODO: Handle download completion(broadcast receiver)
+            refreshTrackedDownload(enqueuedDownloadId)
+
+            ensurePolling()
 
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -126,6 +161,10 @@ class FileRepositoryImpl @Inject constructor(
             cleanupCancelledDownload(createdUri, enqueuedDownloadId)
             Result.failure(e)
         }
+    }
+
+    override fun syncDownloadedFile(downloadId: Long) {
+        refreshTrackedDownload(downloadId)
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -151,7 +190,7 @@ class FileRepositoryImpl @Inject constructor(
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
         if (downloadId != null) {
             runCatching { downloadManager?.remove(downloadId) }
-            activeDownloadIds.remove(downloadId)
+            removeTrackedDownload(downloadId)
         }
         if (uri != null) {
             runCatching { context.contentResolver.delete(uri, null, null) }
@@ -164,5 +203,172 @@ class FileRepositoryImpl @Inject constructor(
         val withExtension = if (baseName.lowercase(Locale.US).endsWith(".pdf")) baseName else "$baseName.pdf"
         val safeName = withExtension.replace(Regex("[^a-zA-Z0-9._-]"), "_")
         return "${System.currentTimeMillis()}_$safeName"
+    }
+
+    private fun upsertTrackedDownload(download: DownloadTrack) {
+        synchronized(activeDownloads) {
+            val index = activeDownloads.indexOfFirst { it.downloadId == download.downloadId }
+            if (index >= 0) {
+                activeDownloads[index] = download
+            } else {
+                activeDownloads.add(download)
+            }
+        }
+        persistActiveDownloads()
+    }
+
+    private fun removeTrackedDownload(downloadId: Long) {
+        synchronized(activeDownloads) {
+            activeDownloads.removeAll { it.downloadId == downloadId }
+        }
+        persistActiveDownloads()
+    }
+
+    private fun refreshPersistedDownloadStates() {
+        val persistedIds = synchronized(activeDownloads) { activeDownloads.map { it.downloadId } }
+        persistedIds.forEach { refreshTrackedDownload(it) }
+    }
+
+    private fun refreshTrackedDownload(downloadId: Long) {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return
+        val query = DownloadManager.Query().setFilterById(downloadId)
+
+        runCatching {
+            downloadManager.query(query)?.use { cursor ->
+                if (!cursor.moveToFirst()) {
+                    removeTrackedDownload(downloadId)
+                    return
+                }
+
+                val status = cursor.getIntByName(DownloadManager.COLUMN_STATUS) ?: return
+                val downloadedBytes = cursor.getLongByName(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR) ?: 0L
+                val totalBytes = cursor.getLongByName(DownloadManager.COLUMN_TOTAL_SIZE_BYTES) ?: -1L
+                val reasonCode = cursor.getIntByName(DownloadManager.COLUMN_REASON)
+                val progressPercent = calculateProgressPercent(downloadedBytes, totalBytes, status)
+
+                synchronized(activeDownloads) {
+                    val index = activeDownloads.indexOfFirst { it.downloadId == downloadId }
+                    if (index >= 0) {
+                        val existing = activeDownloads[index]
+                        activeDownloads[index] = existing.copy(
+                            statusCode = status,
+                            progressPercent = progressPercent,
+                            downloadedBytes = downloadedBytes,
+                            totalBytes = totalBytes,
+                            reasonCode = reasonCode,
+                            updatedAtMillis = System.currentTimeMillis()
+                        )
+                    }
+                }
+                persistActiveDownloads()
+            }
+        }
+    }
+
+    private fun calculateProgressPercent(downloadedBytes: Long, totalBytes: Long, statusCode: Int): Int {
+        if (statusCode == DownloadManager.STATUS_SUCCESSFUL) return 100
+        if (totalBytes <= 0L || downloadedBytes <= 0L) return 0
+        return ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100)
+    }
+
+    private fun restorePersistedDownloads() {
+        val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
+        val json = prefs.getString(ACTIVE_DOWNLOADS_KEY, null) ?: return
+
+        runCatching {
+            val parsed = JSONArray(json)
+            val restored = buildList {
+                for (i in 0 until parsed.length()) {
+                    val item = parsed.optJSONObject(i) ?: continue
+                    downloadTrackFromJson(item)?.let { add(it) }
+                }
+            }
+
+            synchronized(activeDownloads) {
+                activeDownloads.clear()
+                activeDownloads.addAll(restored)
+            }
+        }
+    }
+
+    private fun persistActiveDownloads() {
+        val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
+        val serialized = JSONArray().apply {
+            synchronized(activeDownloads) {
+                activeDownloads.forEach { put(it.toJson()) }
+            }
+        }
+        prefs.edit { putString(ACTIVE_DOWNLOADS_KEY, serialized.toString()) }
+    }
+
+    private fun ensurePolling() {
+        if (!isPolling.compareAndSet(false, true)) return // already running
+
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                while (true) {
+                    val pendingIds = synchronized(activeDownloads) {
+                        activeDownloads
+                            .filter {
+                                it.statusCode != DownloadManager.STATUS_SUCCESSFUL &&
+                                        it.statusCode != DownloadManager.STATUS_FAILED
+                            }
+                            .map { it.downloadId }
+                    }
+
+                    if (pendingIds.isEmpty()) break
+
+                    pendingIds.forEach { refreshTrackedDownload(it) }
+                    delay(1_500L)
+                }
+            } finally {
+                isPolling.set(false)
+            }
+        }
+    }
+
+    private fun downloadTrackFromJson(json: JSONObject): DownloadTrack? {
+        val downloadId = json.optLong("downloadId", -1L)
+        if (downloadId <= 0L) return null
+
+        return DownloadTrack(
+            downloadId = downloadId,
+            pastPaperPublicId = json.optString("pastPaperPublicId", ""),
+            fileName = json.optString("fileName", ""),
+            destinationUri = json.optString("destinationUri", ""),
+            statusCode = json.optInt("statusCode", DownloadManager.STATUS_PENDING),
+            progressPercent = json.optInt("progressPercent", 0).coerceIn(0, 100),
+            downloadedBytes = json.optLong("downloadedBytes", 0L),
+            totalBytes = json.optLong("totalBytes", -1L),
+            reasonCode = if (json.has("reasonCode") && !json.isNull("reasonCode")) json.optInt("reasonCode") else null,
+            createdAtMillis = json.optLong("createdAtMillis", System.currentTimeMillis()),
+            updatedAtMillis = json.optLong("updatedAtMillis", System.currentTimeMillis())
+        )
+    }
+
+    private fun DownloadTrack.toJson(): JSONObject {
+        return JSONObject().apply {
+            put("downloadId", downloadId)
+            put("pastPaperPublicId", pastPaperPublicId)
+            put("fileName", fileName)
+            put("destinationUri", destinationUri)
+            put("statusCode", statusCode)
+            put("progressPercent", progressPercent)
+            put("downloadedBytes", downloadedBytes)
+            put("totalBytes", totalBytes)
+            put("reasonCode", reasonCode)
+            put("createdAtMillis", createdAtMillis)
+            put("updatedAtMillis", updatedAtMillis)
+        }
+    }
+
+    private fun android.database.Cursor.getIntByName(columnName: String): Int? {
+        val index = getColumnIndex(columnName)
+        return if (index >= 0) getInt(index) else null
+    }
+
+    private fun android.database.Cursor.getLongByName(columnName: String): Long? {
+        val index = getColumnIndex(columnName)
+        return if (index >= 0) getLong(index) else null
     }
 }

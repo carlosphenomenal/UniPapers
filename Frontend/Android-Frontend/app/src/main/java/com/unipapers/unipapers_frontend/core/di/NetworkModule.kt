@@ -1,5 +1,6 @@
 package com.unipapers.unipapers_frontend.core.di
 
+import android.content.Context
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileApi
@@ -7,6 +8,7 @@ import com.unipapers.unipapers_frontend.feature.upload.data.repository.FileRepos
 import com.unipapers.unipapers_frontend.feature.upload.domain.repository.FileRepository
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
@@ -54,7 +56,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideFileRepository(fileApi: FileApi, cloudUploadApi: CloudUploadApi): FileRepository {
-        return FileRepositoryImpl(fileApi, cloudUploadApi)
+    fun provideFileRepository(
+        fileApi: FileApi,
+        cloudUploadApi: CloudUploadApi,
+        @ApplicationContext context: Context
+    ): FileRepository {
+        return FileRepositoryImpl(fileApi, cloudUploadApi, context)
     }
 }
