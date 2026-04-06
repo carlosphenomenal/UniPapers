@@ -26,7 +26,7 @@
         </activity>
 
         <receiver
-            android:name=".feature.upload.receiver.DownloadCompleteReceiver"
+            android:name=".feature.filemanagement.receiver.DownloadCompleteReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />

@@ -2,10 +2,10 @@ package com.unipapers.unipapers_frontend.core.di
 
 import android.content.Context
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.CloudUploadApi
-import com.unipapers.unipapers_frontend.feature.upload.data.datasource.FileApi
-import com.unipapers.unipapers_frontend.feature.upload.data.repository.FileRepositoryImpl
-import com.unipapers.unipapers_frontend.feature.upload.domain.repository.FileRepository
+import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
+import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
+import com.unipapers.unipapers_frontend.feature.filemanagement.data.repository.FileRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext

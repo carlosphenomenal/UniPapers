@@ -4,7 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.test.platform.app.InstrumentationRegistry
 import com.unipapers.unipapers_frontend.BuildConfig
-import com.unipapers.unipapers_frontend.feature.upload.domain.model.GeminiResult
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.GeminiResult
+import com.unipapers.unipapers_frontend.feature.filemanagement.utils.GeminiService
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
