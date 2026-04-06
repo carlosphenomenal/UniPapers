@@ -32,6 +32,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Implementation of [FileRepository] that handles file uploads and downloads.
+ *
+ * This class coordinates multi-step uploads (initialization, cloud storage upload, and confirmation)
+ * and manages file downloads using Android's [DownloadManager] with persistent tracking
+ * and progress polling.
+ *
+ * @property fileApi API for file metadata and upload/download orchestration.
+ * @property cloudUploadApi API for direct cloud storage interactions.
+ * @property context Application context for accessing system services and storage.
+ */
 class FileRepositoryImpl @Inject constructor(
     private val fileApi: FileApi,
     private val cloudUploadApi: CloudUploadApi,
@@ -40,7 +51,11 @@ class FileRepositoryImpl @Inject constructor(
     companion object {
         private const val DOWNLOAD_TRACKING_PREFS = "download_tracking_prefs"
         private const val ACTIVE_DOWNLOADS_KEY = "active_downloads"
+
+        /** Flag to prevent multiple concurrent polling coroutines. */
         private val isPolling = AtomicBoolean(false)
+
+        /** In-memory list of downloads currently being tracked by the app. */
         val activeDownloads = mutableListOf<DownloadTrack>()
     }
 
@@ -49,9 +64,19 @@ class FileRepositoryImpl @Inject constructor(
         refreshPersistedDownloadStates()
     }
 
+    /**
+     * Uploads a file following a three-step process:
+     * 1. Initialize: Get a public ID and a signed URL from the backend.
+     * 2. Upload: Send the file bytes directly to the cloud storage using the signed URL.
+     * 3. Confirm: Notify the backend that the upload is complete.
+     *
+     * @param fileUploadDto Metadata for the file being uploaded.
+     * @param file The physical file to be uploaded.
+     * @return [Result.success] if all steps complete, [Result.failure] otherwise.
+     */
     override suspend fun uploadFile(fileUploadDto: FileUploadDto, file: File): Result<Unit> {
         return try {
-            // Initialize upload
+            // Initialize upload on the backend
             val initResponse = fileApi.initializeUploadFile(fileUploadDto)
             if (!initResponse.isSuccessful) {
                 return Result.failure(Exception("Failed to initialize upload: ${initResponse.message()}"))
@@ -63,7 +88,7 @@ class FileRepositoryImpl @Inject constructor(
             val publicId = responseBody.publicId
             val signedUrl = responseBody.signedUrl
 
-            // Upload file to signed URL
+            // Upload the file directly to cloud storage using the signed URL got from the backend
             val requestBody = file.asRequestBody("application/pdf".toMediaTypeOrNull())
             val uploadResponse = cloudUploadApi.uploadFile(
                 url = signedUrl,
@@ -75,7 +100,7 @@ class FileRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Failed to upload file to bucket: ${uploadResponse.message()}"))
             }
 
-            // confirm upload
+            // Confirm that the upload was successful on the backend
             val confirmResponse = fileApi.confirmUpload(publicId)
             if (!confirmResponse.isSuccessful) {
                 return Result.failure(Exception("Failed to confirm upload: ${confirmResponse.message()}"))
@@ -87,12 +112,25 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Initiates a file download using Android's [DownloadManager].
+     *
+     * This method:
+     * 1. Fetches a signed download URL from the backend that will be used to download the files from the bucket.
+     * 2. Prepares a destination URI in the public Downloads directory.
+     * 3. Enqueues the request in [DownloadManager].
+     * 4. Starts tracking the download status and progress.
+     *
+     * @param pastPaperPublicId Unique identifier of the paper to download.
+     * @return [Result.success] if enqueued, [Result.failure] if any step fails.
+     */
     @RequiresApi(Build.VERSION_CODES.Q)
     override suspend fun downloadFile(pastPaperPublicId: String): Result<Unit> {
         var createdUri: Uri? = null
         var enqueuedDownloadId: Long? = null
 
         return try {
+            // Get the file key and the signed url that will be used to download the file from the backend
             val response = fileApi.getPresignedDownloadUrl(pastPaperPublicId)
             if (!response.isSuccessful) {
                 return Result.failure(Exception("Failed to get presigned download URL: ${response.message()}"))
@@ -101,6 +139,7 @@ class FileRepositoryImpl @Inject constructor(
             val responseBody = response.body()
                 ?: return Result.failure(Exception("Response body is null"))
 
+            // Extract the signed url and the key from the body
             val signedUrl = responseBody.signedUrl
             val key = responseBody.key
 
@@ -108,10 +147,13 @@ class FileRepositoryImpl @Inject constructor(
                 return Result.failure(IllegalArgumentException("Signed URL is empty"))
             }
 
+            // Create a file name (normalized key)
             val fileName = normalizeFileName(key)
+            //Create the uri where the download will be stored
             createdUri = createDownloadDestination(fileName)
                 ?: return Result.failure(IOException("Failed to create destination in Downloads/UniPapers"))
 
+            // Initialize the download request using Download manager
             val request = DownloadManager.Request(signedUrl.toUri()).apply {
                 setTitle(fileName)
                 setDescription("Downloading $fileName")
@@ -125,7 +167,10 @@ class FileRepositoryImpl @Inject constructor(
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
                 ?: return Result.failure(IllegalStateException("DownloadManager service is unavailable"))
 
+            // Get the download id of this download
             enqueuedDownloadId = downloadManager.enqueue(request)
+
+            // Add the download to the active downloads list for tracking
             val now = System.currentTimeMillis()
             upsertTrackedDownload(
                 DownloadTrack(
@@ -143,8 +188,10 @@ class FileRepositoryImpl @Inject constructor(
                 )
             )
 
+            // Refresh the downloads to ensure that the newly added download is recognized
             refreshTrackedDownload(enqueuedDownloadId)
 
+            // Ensure that the polling coroutine is running. If it's not, it will be started.
             ensurePolling()
 
             Result.success(Unit)
@@ -163,12 +210,25 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * This function is called by the broadcast receiver when there are completed or failed downloads from [DownloadManager].
+     *
+     * @param downloadId The ID assigned by [DownloadManager].
+     */
     override fun syncDownloadedFile(downloadId: Long) {
         refreshTrackedDownload(downloadId)
     }
 
+    /**
+     * Creates a placeholder in [MediaStore] for the incoming download.
+     * This allows us to pre-define the file name and sub-directory (Downloads/UniPapers).
+     *
+     * @param fileName Desired name for the file.
+     * @return [Uri] of the created placeholder, or null if creation fails.
+     */
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun createDownloadDestination(fileName: String): Uri? {
+        // Define the metadata of the file
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName)
             put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
@@ -177,6 +237,7 @@ class FileRepositoryImpl @Inject constructor(
         }
 
         return context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)?.also { uri ->
+            // Set the download to pending
             context.contentResolver.update(
                 uri,
                 ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) },
@@ -186,6 +247,9 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Cleans up local state and partially downloaded files if the process is cancelled or fails.
+     */
     private fun cleanupCancelledDownload(uri: Uri?, downloadId: Long?) {
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
         if (downloadId != null) {
@@ -197,6 +261,10 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Generates a safe and unique file name from a raw cloud key.
+     * Ensures the name ends with .pdf and prevents illegal character issues.
+     */
     private fun normalizeFileName(rawKey: String): String {
         val lastSegment = rawKey.substringAfterLast('/').trim()
         val baseName = lastSegment.ifBlank { "paper_${System.currentTimeMillis()}" }
@@ -205,6 +273,9 @@ class FileRepositoryImpl @Inject constructor(
         return "${System.currentTimeMillis()}_$safeName"
     }
 
+    /**
+     * Adds or updates a [DownloadTrack] in the in-memory list and persists it.
+     */
     private fun upsertTrackedDownload(download: DownloadTrack) {
         synchronized(activeDownloads) {
             val index = activeDownloads.indexOfFirst { it.downloadId == download.downloadId }
@@ -217,6 +288,9 @@ class FileRepositoryImpl @Inject constructor(
         persistActiveDownloads()
     }
 
+    /**
+     * Removes a download from tracking (e.g., when it fails or is deleted).
+     */
     private fun removeTrackedDownload(downloadId: Long) {
         synchronized(activeDownloads) {
             activeDownloads.removeAll { it.downloadId == downloadId }
@@ -224,11 +298,18 @@ class FileRepositoryImpl @Inject constructor(
         persistActiveDownloads()
     }
 
+    /**
+     * Refreshes the status of all currently tracked downloads.
+     */
     private fun refreshPersistedDownloadStates() {
         val persistedIds = synchronized(activeDownloads) { activeDownloads.map { it.downloadId } }
         persistedIds.forEach { refreshTrackedDownload(it) }
     }
 
+    /**
+     * Queries [DownloadManager] for the current status of a specific download
+     * and updates the local [activeDownloads] list.
+     */
     private fun refreshTrackedDownload(downloadId: Long) {
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return
         val query = DownloadManager.Query().setFilterById(downloadId)
@@ -265,12 +346,18 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Calculates the progress percentage (0-100) based on bytes downloaded.
+     */
     private fun calculateProgressPercent(downloadedBytes: Long, totalBytes: Long, statusCode: Int): Int {
         if (statusCode == DownloadManager.STATUS_SUCCESSFUL) return 100
         if (totalBytes <= 0L || downloadedBytes <= 0L) return 0
         return ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100)
     }
 
+    /**
+     * Restores tracked downloads from [android.content.SharedPreferences] into memory.
+     */
     private fun restorePersistedDownloads() {
         val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
         val json = prefs.getString(ACTIVE_DOWNLOADS_KEY, null) ?: return
@@ -291,6 +378,9 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Saves the current list of tracked downloads to [android.content.SharedPreferences].
+     */
     private fun persistActiveDownloads() {
         val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
         val serialized = JSONArray().apply {
@@ -301,6 +391,10 @@ class FileRepositoryImpl @Inject constructor(
         prefs.edit { putString(ACTIVE_DOWNLOADS_KEY, serialized.toString()) }
     }
 
+    /**
+     * Starts a background coroutine to poll for download progress if not already running.
+     * The loop continues as long as there are pending downloads.
+     */
     private fun ensurePolling() {
         if (!isPolling.compareAndSet(false, true)) return // already running
 
@@ -319,7 +413,7 @@ class FileRepositoryImpl @Inject constructor(
                     if (pendingIds.isEmpty()) break
 
                     pendingIds.forEach { refreshTrackedDownload(it) }
-                    delay(1_500L)
+                    delay(1_500L) // Poll every 1.5 seconds
                 }
             } finally {
                 isPolling.set(false)
@@ -327,6 +421,9 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Reconstructs a [DownloadTrack] from its JSON representation.
+     */
     private fun downloadTrackFromJson(json: JSONObject): DownloadTrack? {
         val downloadId = json.optLong("downloadId", -1L)
         if (downloadId <= 0L) return null
@@ -346,6 +443,9 @@ class FileRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Serializes a [DownloadTrack] to a [JSONObject] for persistence.
+     */
     private fun DownloadTrack.toJson(): JSONObject {
         return JSONObject().apply {
             put("downloadId", downloadId)
@@ -362,11 +462,17 @@ class FileRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Extension function to safely retrieve an [Int] from a cursor by column name.
+     */
     private fun android.database.Cursor.getIntByName(columnName: String): Int? {
         val index = getColumnIndex(columnName)
         return if (index >= 0) getInt(index) else null
     }
 
+    /**
+     * Extension function to safely retrieve a [Long] from a cursor by column name.
+     */
     private fun android.database.Cursor.getLongByName(columnName: String): Long? {
         val index = getColumnIndex(columnName)
         return if (index >= 0) getLong(index) else null
