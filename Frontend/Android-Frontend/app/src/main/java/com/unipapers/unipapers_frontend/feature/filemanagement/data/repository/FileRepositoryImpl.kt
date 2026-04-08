@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.filemanagement.data.repository
 
 import android.app.DownloadManager
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
@@ -13,6 +14,7 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.C
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.local.DownloadDao
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.Download
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.DownloadStatus
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.model.FileUploadDto
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -175,6 +177,7 @@ class FileRepositoryImpl @Inject constructor(
                     pastPaperPublicId = pastPaperPublicId,
                     fileName = fileName,
                     destinationUri = createdUri.toString(),
+                    status = DownloadStatus.PENDING,
                     statusCode = DownloadManager.STATUS_PENDING,
                     progressPercent = 0,
                     downloadedBytes = 0L,
@@ -214,6 +217,91 @@ class FileRepositoryImpl @Inject constructor(
      */
     override fun syncDownloadedFile(downloadId: Long) {
         refreshTrackedDownload(downloadId)
+    }
+
+    /**
+     * Cancels a download through [DownloadManager] and removes it from the database.
+     */
+    override suspend fun cancelDownload(downloadId: Long): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+                    ?: throw IllegalStateException("DownloadManager service is unavailable")
+                downloadManager.remove(downloadId)
+                removeTrackedDownload(downloadId)
+            }
+        }
+    }
+
+    /**
+     * Pauses a download through [DownloadManager] by modifying its status via [android.content.ContentResolver].
+     *
+     * Note: [DownloadManager] doesn't expose a public pause/resume API.
+     * This uses internal constants and might not work on all Android versions.
+     */
+    override suspend fun pauseDownload(downloadId: Long): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val existing = downloadDao.getDownloadById(downloadId)
+                    ?: throw IOException("Download not found in database (id=$downloadId)")
+
+                val originalStatus = existing.status
+                val updatedDownload = existing.copy(
+                    status = DownloadStatus.PAUSED,
+                    updatedAtMillis = System.currentTimeMillis()
+                )
+                downloadDao.upsertDownload(updatedDownload)
+
+                val contentValues = ContentValues().apply {
+                    // Hidden internal constants for DownloadManager control
+                    put("control", 1) // 1 = CONTROL_PAUSED
+                }
+                val downloadUri = ContentUris.withAppendedId("content://downloads/my_downloads".toUri(), downloadId)
+                val updated = context.contentResolver.update(downloadUri, contentValues, null, null)
+                if (updated <= 0) {
+                    // If DM update fails, rollback Room status to original
+                    downloadDao.upsertDownload(existing.copy(
+                        status = originalStatus,
+                        updatedAtMillis = System.currentTimeMillis()
+                    ))
+                }
+                refreshTrackedDownload(downloadId)
+            }
+        }
+    }
+
+    /**
+     * Resumes a paused download through [DownloadManager] by modifying its status via [android.content.ContentResolver].
+     */
+    override suspend fun resumeDownload(downloadId: Long): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val existing = downloadDao.getDownloadById(downloadId)
+                    ?: throw IOException("Download not found in database (id=$downloadId)")
+
+                val originalStatus = existing.status
+                val updatedDownload = existing.copy(
+                    status = DownloadStatus.DOWNLOADING,
+                    updatedAtMillis = System.currentTimeMillis()
+                )
+                downloadDao.upsertDownload(updatedDownload)
+
+                val contentValues = ContentValues().apply {
+                    // Hidden internal constants for DownloadManager control
+                    put("control", 0) // 0 = CONTROL_RUN
+                }
+                val downloadUri = ContentUris.withAppendedId("content://downloads/my_downloads".toUri(), downloadId)
+                val updated = context.contentResolver.update(downloadUri, contentValues, null, null)
+                if (updated <= 0) {
+                    // If the DM update fails, roll back Room status to the original
+                    downloadDao.upsertDownload(existing.copy(
+                        status = originalStatus,
+                        updatedAtMillis = System.currentTimeMillis()
+                    ))
+                }
+                refreshTrackedDownload(downloadId)
+            }
+        }
     }
 
     /**
@@ -322,7 +410,34 @@ class FileRepositoryImpl @Inject constructor(
                 CoroutineScope(Dispatchers.IO).launch {
                     val existing = downloadDao.getDownloadById(downloadId)
                     if (existing != null) {
+                        // Map DownloadManager status to our DownloadStatus
+                        val mappedStatus = when (status) {
+                            DownloadManager.STATUS_PENDING -> DownloadStatus.PENDING
+                            DownloadManager.STATUS_RUNNING -> DownloadStatus.DOWNLOADING
+                            DownloadManager.STATUS_PAUSED -> {
+                                when (reasonCode) {
+                                    DownloadManager.PAUSED_WAITING_FOR_NETWORK,
+                                    DownloadManager.PAUSED_QUEUED_FOR_WIFI -> DownloadStatus.WAITING_FOR_NETWORK
+                                    else -> DownloadStatus.PAUSED
+                                }
+                            }
+                            DownloadManager.STATUS_SUCCESSFUL -> DownloadStatus.COMPLETED
+                            DownloadManager.STATUS_FAILED -> DownloadStatus.FAILED
+                            else -> existing.status
+                        }
+
+                        // If user manually paused, respect that unless it finished or failed.
+                        // We also treat WAITING_FOR_NETWORK as a transient auto-pause that shouldn't
+                        // override a deliberate user PAUSE.
+                        val finalStatus = if (existing.status == DownloadStatus.PAUSED &&
+                            (mappedStatus == DownloadStatus.DOWNLOADING || mappedStatus == DownloadStatus.WAITING_FOR_NETWORK)) {
+                            DownloadStatus.PAUSED
+                        } else {
+                            mappedStatus
+                        }
+
                         val updated = existing.copy(
+                            status = finalStatus,
                             statusCode = status,
                             progressPercent = progressPercent,
                             downloadedBytes = downloadedBytes,
@@ -358,8 +473,9 @@ class FileRepositoryImpl @Inject constructor(
                 while (true) {
                     val pendingIds = downloadDao.getAllTrackedDownloads()
                         .filter {
-                            it.statusCode != DownloadManager.STATUS_SUCCESSFUL &&
-                                    it.statusCode != DownloadManager.STATUS_FAILED
+                            it.status != DownloadStatus.COMPLETED &&
+                                    it.status != DownloadStatus.FAILED &&
+                                    it.status != DownloadStatus.CANCELLED
                         }
                         .map { it.downloadId }
 

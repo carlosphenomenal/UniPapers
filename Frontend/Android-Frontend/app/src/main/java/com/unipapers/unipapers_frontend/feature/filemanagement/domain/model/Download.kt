@@ -9,6 +9,7 @@ data class Download(
     val pastPaperPublicId: String,
     val fileName: String,
     val destinationUri: String,
+    val status: DownloadStatus,
     val statusCode: Int,
     val progressPercent: Int,
     val downloadedBytes: Long,
