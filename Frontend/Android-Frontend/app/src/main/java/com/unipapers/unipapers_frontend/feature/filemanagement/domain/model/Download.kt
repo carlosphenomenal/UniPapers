@@ -1,7 +1,11 @@
 package com.unipapers.unipapers_frontend.feature.filemanagement.domain.model
 
-data class DownloadTrack(
-    val downloadId: Long,
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "downloads")
+data class Download(
+    @PrimaryKey val downloadId: Long,
     val pastPaperPublicId: String,
     val fileName: String,
     val destinationUri: String,

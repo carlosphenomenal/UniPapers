@@ -3,6 +3,7 @@ package com.unipapers.unipapers_frontend.core.di
 import android.content.Context
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
+import com.unipapers.unipapers_frontend.feature.filemanagement.data.local.DownloadDao
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.repository.FileRepositoryImpl
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import dagger.Module
@@ -21,8 +22,9 @@ object RepositoryModule {
     fun provideFileRepository(
         fileApi: FileApi,
         cloudUploadApi: CloudUploadApi,
+        downloadDao: DownloadDao,
         @ApplicationContext context: Context
     ): FileRepository {
-        return FileRepositoryImpl(fileApi, cloudUploadApi, context)
+        return FileRepositoryImpl(fileApi, cloudUploadApi, downloadDao, context)
     }
 }

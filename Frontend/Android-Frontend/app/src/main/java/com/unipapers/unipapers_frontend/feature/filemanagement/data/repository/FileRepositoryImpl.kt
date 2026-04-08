@@ -11,25 +11,18 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
-import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.DownloadTrack
+import com.unipapers.unipapers_frontend.feature.filemanagement.data.local.DownloadDao
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.Download
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.model.FileUploadDto
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
-import androidx.core.content.edit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -46,22 +39,22 @@ import java.util.concurrent.atomic.AtomicBoolean
 class FileRepositoryImpl @Inject constructor(
     private val fileApi: FileApi,
     private val cloudUploadApi: CloudUploadApi,
+    private val downloadDao: DownloadDao,
     @param:ApplicationContext private val context: Context
 ) : FileRepository {
     companion object {
-        private const val DOWNLOAD_TRACKING_PREFS = "download_tracking_prefs"
-        private const val ACTIVE_DOWNLOADS_KEY = "active_downloads"
-
         /** Flag to prevent multiple concurrent polling coroutines. */
         private val isPolling = AtomicBoolean(false)
 
         /** In-memory list of downloads currently being tracked by the app. */
-        val activeDownloads = mutableListOf<DownloadTrack>()
+        val activeDownloads = mutableListOf<Download>()
     }
 
     init {
-        restorePersistedDownloads()
-        refreshPersistedDownloadStates()
+        CoroutineScope(Dispatchers.IO).launch {
+            restorePersistedDownloads()
+            refreshPersistedDownloadStates()
+        }
     }
 
     /**
@@ -173,7 +166,7 @@ class FileRepositoryImpl @Inject constructor(
             // Add the download to the active downloads list for tracking
             val now = System.currentTimeMillis()
             upsertTrackedDownload(
-                DownloadTrack(
+                Download(
                     downloadId = enqueuedDownloadId,
                     pastPaperPublicId = pastPaperPublicId,
                     fileName = fileName,
@@ -274,9 +267,9 @@ class FileRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Adds or updates a [DownloadTrack] in the in-memory list and persists it.
+     * Adds or updates a [Download] in the in-memory list and persists it.
      */
-    private fun upsertTrackedDownload(download: DownloadTrack) {
+    private fun upsertTrackedDownload(download: Download) {
         synchronized(activeDownloads) {
             val index = activeDownloads.indexOfFirst { it.downloadId == download.downloadId }
             if (index >= 0) {
@@ -285,7 +278,9 @@ class FileRepositoryImpl @Inject constructor(
                 activeDownloads.add(download)
             }
         }
-        persistActiveDownloads()
+        CoroutineScope(Dispatchers.IO).launch {
+            downloadDao.upsertDownload(download)
+        }
     }
 
     /**
@@ -295,7 +290,9 @@ class FileRepositoryImpl @Inject constructor(
         synchronized(activeDownloads) {
             activeDownloads.removeAll { it.downloadId == downloadId }
         }
-        persistActiveDownloads()
+        CoroutineScope(Dispatchers.IO).launch {
+            downloadDao.removeDownload(downloadId)
+        }
     }
 
     /**
@@ -331,7 +328,7 @@ class FileRepositoryImpl @Inject constructor(
                     val index = activeDownloads.indexOfFirst { it.downloadId == downloadId }
                     if (index >= 0) {
                         val existing = activeDownloads[index]
-                        activeDownloads[index] = existing.copy(
+                        val updated = existing.copy(
                             statusCode = status,
                             progressPercent = progressPercent,
                             downloadedBytes = downloadedBytes,
@@ -339,9 +336,12 @@ class FileRepositoryImpl @Inject constructor(
                             reasonCode = reasonCode,
                             updatedAtMillis = System.currentTimeMillis()
                         )
+                        activeDownloads[index] = updated
+                        CoroutineScope(Dispatchers.IO).launch {
+                            downloadDao.upsertDownload(updated)
+                        }
                     }
                 }
-                persistActiveDownloads()
             }
         }
     }
@@ -356,39 +356,14 @@ class FileRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Restores tracked downloads from [android.content.SharedPreferences] into memory.
+     * Restores tracked downloads from Room into memory.
      */
-    private fun restorePersistedDownloads() {
-        val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
-        val json = prefs.getString(ACTIVE_DOWNLOADS_KEY, null) ?: return
-
-        runCatching {
-            val parsed = JSONArray(json)
-            val restored = buildList {
-                for (i in 0 until parsed.length()) {
-                    val item = parsed.optJSONObject(i) ?: continue
-                    downloadTrackFromJson(item)?.let { add(it) }
-                }
-            }
-
-            synchronized(activeDownloads) {
-                activeDownloads.clear()
-                activeDownloads.addAll(restored)
-            }
+    private suspend fun restorePersistedDownloads() {
+        val restored = downloadDao.getAllTrackedDownloads()
+        synchronized(activeDownloads) {
+            activeDownloads.clear()
+            activeDownloads.addAll(restored)
         }
-    }
-
-    /**
-     * Saves the current list of tracked downloads to [android.content.SharedPreferences].
-     */
-    private fun persistActiveDownloads() {
-        val prefs = context.getSharedPreferences(DOWNLOAD_TRACKING_PREFS, Context.MODE_PRIVATE)
-        val serialized = JSONArray().apply {
-            synchronized(activeDownloads) {
-                activeDownloads.forEach { put(it.toJson()) }
-            }
-        }
-        prefs.edit { putString(ACTIVE_DOWNLOADS_KEY, serialized.toString()) }
     }
 
     /**
@@ -418,47 +393,6 @@ class FileRepositoryImpl @Inject constructor(
             } finally {
                 isPolling.set(false)
             }
-        }
-    }
-
-    /**
-     * Reconstructs a [DownloadTrack] from its JSON representation.
-     */
-    private fun downloadTrackFromJson(json: JSONObject): DownloadTrack? {
-        val downloadId = json.optLong("downloadId", -1L)
-        if (downloadId <= 0L) return null
-
-        return DownloadTrack(
-            downloadId = downloadId,
-            pastPaperPublicId = json.optString("pastPaperPublicId", ""),
-            fileName = json.optString("fileName", ""),
-            destinationUri = json.optString("destinationUri", ""),
-            statusCode = json.optInt("statusCode", DownloadManager.STATUS_PENDING),
-            progressPercent = json.optInt("progressPercent", 0).coerceIn(0, 100),
-            downloadedBytes = json.optLong("downloadedBytes", 0L),
-            totalBytes = json.optLong("totalBytes", -1L),
-            reasonCode = if (json.has("reasonCode") && !json.isNull("reasonCode")) json.optInt("reasonCode") else null,
-            createdAtMillis = json.optLong("createdAtMillis", System.currentTimeMillis()),
-            updatedAtMillis = json.optLong("updatedAtMillis", System.currentTimeMillis())
-        )
-    }
-
-    /**
-     * Serializes a [DownloadTrack] to a [JSONObject] for persistence.
-     */
-    private fun DownloadTrack.toJson(): JSONObject {
-        return JSONObject().apply {
-            put("downloadId", downloadId)
-            put("pastPaperPublicId", pastPaperPublicId)
-            put("fileName", fileName)
-            put("destinationUri", destinationUri)
-            put("statusCode", statusCode)
-            put("progressPercent", progressPercent)
-            put("downloadedBytes", downloadedBytes)
-            put("totalBytes", totalBytes)
-            put("reasonCode", reasonCode)
-            put("createdAtMillis", createdAtMillis)
-            put("updatedAtMillis", updatedAtMillis)
         }
     }
 
