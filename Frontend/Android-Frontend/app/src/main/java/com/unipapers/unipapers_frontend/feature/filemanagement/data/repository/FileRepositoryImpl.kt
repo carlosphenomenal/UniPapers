@@ -17,6 +17,9 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.data.model.FileUp
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
@@ -45,18 +48,14 @@ class FileRepositoryImpl @Inject constructor(
     companion object {
         /** Flag to prevent multiple concurrent polling coroutines. */
         private val isPolling = AtomicBoolean(false)
-
-        /** In-memory list of downloads currently being tracked by the app. */
-        val activeDownloads = mutableListOf<Download>()
     }
+    private val _downloads = MutableStateFlow<List<Download>>(emptyList())
+    override val downloads: StateFlow<List<Download>> = _downloads.asStateFlow()
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
             downloadDao.observeAllDownloads().collect { downloads ->
-                synchronized(activeDownloads) {
-                    activeDownloads.clear()
-                    activeDownloads.addAll(downloads)
-                }
+                _downloads.value = downloads
             }
         }
         refreshPersistedDownloadStates()
@@ -272,17 +271,9 @@ class FileRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Adds or updates a [Download] in the in-memory list and persists it.
+     * Adds or updates a [Download] in the database.
      */
     private fun upsertTrackedDownload(download: Download) {
-        synchronized(activeDownloads) {
-            val index = activeDownloads.indexOfFirst { it.downloadId == download.downloadId }
-            if (index >= 0) {
-                activeDownloads[index] = download
-            } else {
-                activeDownloads.add(download)
-            }
-        }
         CoroutineScope(Dispatchers.IO).launch {
             downloadDao.upsertDownload(download)
         }
@@ -292,9 +283,6 @@ class FileRepositoryImpl @Inject constructor(
      * Removes a download from tracking (e.g., when it fails or is deleted).
      */
     private fun removeTrackedDownload(downloadId: Long) {
-        synchronized(activeDownloads) {
-            activeDownloads.removeAll { it.downloadId == downloadId }
-        }
         CoroutineScope(Dispatchers.IO).launch {
             downloadDao.removeDownload(downloadId)
         }
@@ -304,13 +292,15 @@ class FileRepositoryImpl @Inject constructor(
      * Refreshes the status of all currently tracked downloads.
      */
     private fun refreshPersistedDownloadStates() {
-        val persistedIds = synchronized(activeDownloads) { activeDownloads.map { it.downloadId } }
-        persistedIds.forEach { refreshTrackedDownload(it) }
+        CoroutineScope(Dispatchers.IO).launch {
+            val persistedIds = downloadDao.getAllTrackedDownloads().map { it.downloadId }
+            persistedIds.forEach { refreshTrackedDownload(it) }
+        }
     }
 
     /**
      * Queries [DownloadManager] for the current status of a specific download
-     * and updates the local [activeDownloads] list.
+     * and updates the database.
      */
     private fun refreshTrackedDownload(downloadId: Long) {
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return
@@ -329,10 +319,9 @@ class FileRepositoryImpl @Inject constructor(
                 val reasonCode = cursor.getIntByName(DownloadManager.COLUMN_REASON)
                 val progressPercent = calculateProgressPercent(downloadedBytes, totalBytes, status)
 
-                synchronized(activeDownloads) {
-                    val index = activeDownloads.indexOfFirst { it.downloadId == downloadId }
-                    if (index >= 0) {
-                        val existing = activeDownloads[index]
+                CoroutineScope(Dispatchers.IO).launch {
+                    val existing = downloadDao.getDownloadById(downloadId)
+                    if (existing != null) {
                         val updated = existing.copy(
                             statusCode = status,
                             progressPercent = progressPercent,
@@ -341,10 +330,7 @@ class FileRepositoryImpl @Inject constructor(
                             reasonCode = reasonCode,
                             updatedAtMillis = System.currentTimeMillis()
                         )
-                        activeDownloads[index] = updated
-                        CoroutineScope(Dispatchers.IO).launch {
-                            downloadDao.upsertDownload(updated)
-                        }
+                        downloadDao.upsertDownload(updated)
                     }
                 }
             }
@@ -362,7 +348,7 @@ class FileRepositoryImpl @Inject constructor(
 
     /**
      * Starts a background coroutine to poll for download progress if not already running.
-     * The loop continues as long as there are pending downloads.
+     * The loop continues as long as there are pending downloads in the database.
      */
     private fun ensurePolling() {
         if (!isPolling.compareAndSet(false, true)) return // already running
@@ -370,14 +356,12 @@ class FileRepositoryImpl @Inject constructor(
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 while (true) {
-                    val pendingIds = synchronized(activeDownloads) {
-                        activeDownloads
-                            .filter {
-                                it.statusCode != DownloadManager.STATUS_SUCCESSFUL &&
-                                        it.statusCode != DownloadManager.STATUS_FAILED
-                            }
-                            .map { it.downloadId }
-                    }
+                    val pendingIds = downloadDao.getAllTrackedDownloads()
+                        .filter {
+                            it.statusCode != DownloadManager.STATUS_SUCCESSFUL &&
+                                    it.statusCode != DownloadManager.STATUS_FAILED
+                        }
+                        .map { it.downloadId }
 
                     if (pendingIds.isEmpty()) break
 
