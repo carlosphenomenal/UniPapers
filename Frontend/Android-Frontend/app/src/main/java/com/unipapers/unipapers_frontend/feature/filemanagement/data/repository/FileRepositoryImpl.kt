@@ -52,9 +52,14 @@ class FileRepositoryImpl @Inject constructor(
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            restorePersistedDownloads()
-            refreshPersistedDownloadStates()
+            downloadDao.observeAllDownloads().collect { downloads ->
+                synchronized(activeDownloads) {
+                    activeDownloads.clear()
+                    activeDownloads.addAll(downloads)
+                }
+            }
         }
+        refreshPersistedDownloadStates()
     }
 
     /**
@@ -353,17 +358,6 @@ class FileRepositoryImpl @Inject constructor(
         if (statusCode == DownloadManager.STATUS_SUCCESSFUL) return 100
         if (totalBytes <= 0L || downloadedBytes <= 0L) return 0
         return ((downloadedBytes * 100) / totalBytes).toInt().coerceIn(0, 100)
-    }
-
-    /**
-     * Restores tracked downloads from Room into memory.
-     */
-    private suspend fun restorePersistedDownloads() {
-        val restored = downloadDao.getAllTrackedDownloads()
-        synchronized(activeDownloads) {
-            activeDownloads.clear()
-            activeDownloads.addAll(restored)
-        }
     }
 
     /**
