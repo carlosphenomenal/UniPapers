@@ -3,9 +3,7 @@ package com.unipapers.backend.Modules.FileManagement.Services;
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperAlreadyExistsByHashException;
-import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.UnverifiedPastPapersLimitExceededException;
-import com.unipapers.backend.Modules.FileManagement.Dtos.FileDownloadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
@@ -71,8 +69,13 @@ public class FileUploadService {
         }
 
         // Generate the object key to be used to store the file in the bucket
+        String program = course.getProgram() != null ? course.getProgram().getProgramName() : null;
         String key = generateKey(
                 fileUploadDto.getFileName(),
+                type,
+                program,
+                fileUploadDto.getYearOfStudy(),
+                fileUploadDto.getSemester(),
                 course.getCourseName(),
                 fileUploadDto.getAcademicYear()
         );
@@ -124,6 +127,7 @@ public class FileUploadService {
 
     }
 
+    @Transactional
     public void markAsUploaded(String pastPaperPublicId){
 
         int updatedCount = pastPaperRepo.markAsUploaded(pastPaperPublicId);
@@ -134,47 +138,44 @@ public class FileUploadService {
 
     }
 
-    public FileDownloadResponseDto getPresignedDownloadByPublicId(String pastPaperPublicId) {
-        PastPaper pastPaper = pastPaperRepo.findByPublicId(pastPaperPublicId)
-                .orElseThrow(() -> new PastPaperNotFoundException("PastPaper not found with publicId: " + pastPaperPublicId));
-
-        String key = pastPaper.getKey();
-        if (key == null || key.isBlank()) {
-            throw new PastPaperNotFoundException("File key not found for pastPaper publicId: " + pastPaperPublicId);
-        }
-
-        String signedUrl = r2StorageService.presignedDownloadUrl(key, Duration.ofMinutes(5));
-        return new FileDownloadResponseDto(key, signedUrl);
-    }
-
     //======== HELPER METHODS =======//
     public static String generateKey(
             String originalFilename,
+            PastPaperType pastPaperType,
+            String program,
+            int yearOfStudy,
+            int semester,
             String course,
-            String year
+            String academicYear
     ) {
-        // Handle nullable parameters
-        String safeYear = year != null ? normalize(year) : "unknown-year";
+        String typeFolder = resolveTypeFolder(pastPaperType);
+        String safeProgram = normalize(program);
+        String safeYearOfStudy = normalize(String.valueOf(yearOfStudy));
+        String safeSemester = normalize(String.valueOf(semester));
+        String safeCourse = normalize(course);
+        String safeAcademicYear = academicYear != null ? normalize(academicYear) : "unknown-year";
 
-        String extension = extractExtension(originalFilename);
         String safeName = sanitizeFilename(originalFilename);
-        String id = generateId(); // UUID or ULID
+        String id = generateId(); // ULID
 
         return String.format(
-                "past-papers/%s/%s/%s-%s%s",
-                course,
-                safeYear,
+                "past-papers/%s/%s/year-%s/semester-%s/%s/%s/%s-%s",
+                typeFolder,
+                safeProgram,
+                safeYearOfStudy,
+                safeSemester,
+                safeCourse,
+                safeAcademicYear,
                 id,
-                safeName,
-                extension
+                safeName
         );
     }
 
-    private static String extractExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
+    private static String resolveTypeFolder(PastPaperType type) {
+        if (type == PastPaperType.TEST) {
+            return "tests";
         }
-        return filename.substring(filename.lastIndexOf(".")).toLowerCase();
+        return "exams";
     }
 
     private static String sanitizeFilename(String filename) {

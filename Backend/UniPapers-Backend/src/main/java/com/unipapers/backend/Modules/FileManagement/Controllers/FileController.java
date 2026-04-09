@@ -1,28 +1,24 @@
 package com.unipapers.backend.Modules.FileManagement.Controllers;
 
-import com.unipapers.backend.Configurations.Cloudflare.R2Properties;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileDownloadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
+import com.unipapers.backend.Modules.FileManagement.Services.FileDeleteService;
+import com.unipapers.backend.Modules.FileManagement.Services.FileDownloadService;
 import com.unipapers.backend.Modules.FileManagement.Services.FileUploadService;
-import com.unipapers.backend.Utils.R2StorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileController {
 
-    private final R2StorageService storageService;
-    private final R2Properties props;
     private final FileUploadService fileUploadService;
+    private final FileDeleteService fileDeleteService;
+    private final FileDownloadService fileDownloadService;
 
     @PostMapping("/init-upload")
     public ResponseEntity<?> initializeUploadFile(@RequestBody FileUploadDto fileUploadDto) throws IOException {
@@ -37,46 +33,19 @@ public class FileController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/presign-upload")
-    public ResponseEntity<Map<String, String>> presignUpload(
-            @RequestParam String filename,
-            @RequestParam String contentType) {
-
-        String key = UUID.randomUUID() + "_" + filename;
-        String uploadUrl = storageService.presignedUploadUrl(key, contentType, Duration.ofMinutes(15));
-        String publicUrl = props.getPublicUrl() + "/" + key;
-
-        return ResponseEntity.ok(Map.of(
-                "key", key,
-                "uploadUrl", uploadUrl,   // frontend PUTs directly to this
-                "publicUrl", publicUrl    // final URL to store in your DB
-        ));
-    }
-
-    @GetMapping("/download/{key}")
-    public ResponseEntity<byte[]> download(@PathVariable String key) {
-        byte[] data = storageService.download(key);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + key + "\"")
-                .body(data);
-    }
-
-    @DeleteMapping("/{key}")
-    public ResponseEntity<Void> delete(@PathVariable String key) {
-        storageService.delete(key);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/presign/{key}")
-    public ResponseEntity<String> presign(@PathVariable String key) {
-        String url = storageService.presignedDownloadUrl(key, Duration.ofMinutes(15));
-        return ResponseEntity.ok(url);
-    }
-
+    // Endpoint to get the presigned download URL for a past paper
     @GetMapping("/presign-download/{pastPaperPublicId}")
     public ResponseEntity<FileDownloadResponseDto> presignDownloadByPastPaperPublicId(
             @PathVariable String pastPaperPublicId
     ) {
-        return ResponseEntity.ok(fileUploadService.getPresignedDownloadByPublicId(pastPaperPublicId));
+        return ResponseEntity.ok(fileDownloadService.getPresignedDownloadByPublicId(pastPaperPublicId));
     }
+
+    // Endpoint to delete a past paper
+    @DeleteMapping("/{pastPaperPublicId}")
+    public ResponseEntity<Void> delete(@PathVariable String pastPaperPublicId) {
+        fileDeleteService.deletePaper(pastPaperPublicId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
