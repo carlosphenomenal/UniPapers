@@ -2,6 +2,7 @@ package com.unipapers.backend.Modules.FileManagement.Controllers;
 
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileDownloadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadDto;
+import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Services.FileDeleteService;
 import com.unipapers.backend.Modules.FileManagement.Services.FileDownloadService;
 import com.unipapers.backend.Modules.FileManagement.Services.FileUploadService;
@@ -20,9 +21,18 @@ public class FileController {
     private final FileDeleteService fileDeleteService;
     private final FileDownloadService fileDownloadService;
 
+    // This endpoint is used to initialize the upload process by creating a database record for the past paper and
+    // generating a pre-signed URL for the frontend to upload the file directly to the bucket.
     @PostMapping("/init-upload")
     public ResponseEntity<?> initializeUploadFile(@RequestBody FileUploadDto fileUploadDto) throws IOException {
         return ResponseEntity.ok(fileUploadService.initializeUploadFile(fileUploadDto));
+    }
+
+    // When the frontend checks the expiration time of the pre-signed url, and it is expired, it will use this
+    // endpoint to generate a new pre-signed url for the frontend to upload the file to the bucket.
+    @GetMapping("/presign-upload/{pastPaperPublicId}")
+    public ResponseEntity<FileUploadResponseDto> presignUploadByPastPaperPublicId(@PathVariable String pastPaperPublicId) {
+        return ResponseEntity.ok(fileUploadService.getPresignedUploadByPublicId(pastPaperPublicId));
     }
 
     // This endpoint can be used to confirm the upload after the frontend has uploaded the file to the bucket using the pre-signed URL.

@@ -141,6 +141,25 @@ public class FileUploadService {
 
     }
 
+    public FileUploadResponseDto getPresignedUploadByPublicId(String pastPaperPublicId) {
+         PastPaper pastPaper = pastPaperRepo.findByPublicId(pastPaperPublicId)
+                .orElseThrow(() -> new EntityNotFoundException("PastPaper not found with publicId: " + pastPaperPublicId));
+
+        String key = pastPaper.getKey();
+
+        String signedUrl = r2StorageService.presignedUploadUrl(
+                key,
+                "application/pdf",
+                Duration.ofMinutes(5)
+        );
+
+        return FileUploadResponseDto.builder()
+                .publicId(pastPaper.getPublicId())
+                .signedUrl(signedUrl)
+                .expiresAt(Instant.now().plus(5, ChronoUnit.MINUTES))
+                .build();
+     }
+
     //======== HELPER METHODS =======//
     public static String generateKey(
             String originalFilename,

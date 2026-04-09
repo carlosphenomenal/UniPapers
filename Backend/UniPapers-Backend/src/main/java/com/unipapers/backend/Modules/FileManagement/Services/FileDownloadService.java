@@ -23,10 +23,8 @@ public class FileDownloadService {
         PastPaper pastPaper = pastPaperRepo.findByPublicId(pastPaperPublicId)
                 .orElseThrow(() -> new PastPaperNotFoundException("PastPaper not found with publicId: " + pastPaperPublicId));
 
+
         String key = pastPaper.getKey();
-        if (key == null || key.isBlank()) {
-            throw new PastPaperNotFoundException("File key not found for pastPaper publicId: " + pastPaperPublicId);
-        }
 
         String signedUrl = r2StorageService.presignedDownloadUrl(key, Duration.ofMinutes(5));
         return new FileDownloadResponseDto(key, signedUrl, Instant.now().plus(5, ChronoUnit.MINUTES));
