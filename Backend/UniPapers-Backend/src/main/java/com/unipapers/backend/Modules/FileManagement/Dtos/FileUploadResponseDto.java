@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,5 +15,6 @@ public class FileUploadResponseDto {
 
     private String publicId;
     private String signedUrl;
+    private Instant expiresAt;
 
 }

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +29,7 @@ public class FileDownloadService {
         }
 
         String signedUrl = r2StorageService.presignedDownloadUrl(key, Duration.ofMinutes(5));
-        return new FileDownloadResponseDto(key, signedUrl);
+        return new FileDownloadResponseDto(key, signedUrl, Instant.now().plus(5, ChronoUnit.MINUTES));
     }
 
 }

@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -123,6 +125,7 @@ public class FileUploadService {
         return FileUploadResponseDto.builder()
                 .publicId(savedPastPaper.getPublicId())
                 .signedUrl(signedUrl)
+                .expiresAt(Instant.now().plus(5, ChronoUnit.MINUTES))
                 .build();
 
     }
