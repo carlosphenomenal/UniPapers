@@ -1,4 +1,4 @@
-package com.unipapers.feature.profile.data.datasource.dto
+package com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto
 
 import com.google.gson.annotations.SerializedName
 
