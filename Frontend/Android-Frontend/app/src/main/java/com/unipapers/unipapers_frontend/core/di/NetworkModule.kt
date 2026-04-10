@@ -11,7 +11,6 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
-import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
 import com.unipapers.unipapers_frontend.feature.search.data.datasource.SearchApiService
 
 @Module

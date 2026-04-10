@@ -1,8 +1,8 @@
-package com.unipapers.feature.profile.data.datasource
+package com.unipapers.unipapers_frontend.feature.profile.data.datasource
 
-import com.unipapers.feature.profile.data.datasource.dto.UpdatePasswordRequest
-import com.unipapers.feature.profile.data.datasource.dto.UpdateProfileRequest
-import com.unipapers.feature.profile.data.datasource.dto.UserDto
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto.UpdatePasswordRequest
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto.UpdateProfileRequest
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto.UserDto
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PUT
