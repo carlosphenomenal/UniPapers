@@ -11,6 +11,8 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
+import com.unipapers.unipapers_frontend.feature.search.data.datasource.SearchApiService
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,5 +50,16 @@ object NetworkModule {
     @Singleton
     fun provideCloudUploadApi(retrofit: Retrofit): CloudUploadApi {
         return retrofit.create(CloudUploadApi::class.java)
+    }
+    @Provides
+    @Singleton
+    fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
+        return retrofit.create(ProfileApiService.class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchApi(retrofit: Retrofit): SearchApiService {
+        return retrofit.create(SearchApiService.class.java)
     }
 }
