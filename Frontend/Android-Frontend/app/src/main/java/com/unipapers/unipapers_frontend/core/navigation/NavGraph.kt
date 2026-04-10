@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
+import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
 
 @Composable
 fun NavGraph(
@@ -33,7 +34,13 @@ fun NavGraph(
             PlaceholderScreen("Downloads Screen")
         }
         composable(Screen.Profile.route) {
-            PlaceholderScreen("Profile Screen")
+            ProfileScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
         composable(Screen.Upload.route) {
             UploadFlowScreen(
