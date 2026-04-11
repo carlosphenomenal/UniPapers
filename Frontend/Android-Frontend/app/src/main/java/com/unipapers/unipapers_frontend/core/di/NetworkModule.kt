@@ -3,6 +3,8 @@ package com.unipapers.unipapers_frontend.core.di
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
+
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,7 +13,6 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
-import com.unipapers.unipapers_frontend.feature.search.data.datasource.SearchApiService
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -50,15 +51,12 @@ object NetworkModule {
     fun provideCloudUploadApi(retrofit: Retrofit): CloudUploadApi {
         return retrofit.create(CloudUploadApi::class.java)
     }
-    @Provides
-    @Singleton
-    fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
-        return retrofit.create(ProfileApiService.class.java)
-    }
 
     @Provides
     @Singleton
-    fun provideSearchApi(retrofit: Retrofit): SearchApiService {
-        return retrofit.create(SearchApiService.class.java)
+    fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
+        return retrofit.create(ProfileApiService::class.java)
     }
+
+
 }
