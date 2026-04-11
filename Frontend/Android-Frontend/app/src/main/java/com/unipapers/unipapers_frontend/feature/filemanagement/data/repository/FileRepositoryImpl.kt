@@ -351,11 +351,18 @@ class FileRepositoryImpl @Inject constructor(
      * Ensures the name ends with .pdf and prevents illegal character issues.
      */
     private fun normalizeFileName(rawKey: String): String {
+        // The backend saves the file a key in the format:
+        // past-papers/exams/bachelor-of-science-in-software-engineering/year-1/semester-2/introduction-to-programming/2024-2025/01KNT4W1AAA77PM0CWVQJJDGM6-testpdf
         val lastSegment = rawKey.substringAfterLast('/').trim()
-        val baseName = lastSegment.ifBlank { "paper_${System.currentTimeMillis()}" }
+        // The backend saves the file name with a unique identifier before it eg., 01KNT4W1AAA77PM0CWVQJJDGM6-testpdf
+        // so this step removes the unique identifier
+        val nameWithoutUniqueIdentifier = lastSegment.substringAfterLast('-').trim()
+        val baseName = nameWithoutUniqueIdentifier.ifBlank { "paper_${System.currentTimeMillis()}" }
         val withExtension = if (baseName.lowercase(Locale.US).endsWith(".pdf")) baseName else "$baseName.pdf"
+        // This replaces unwanted characters (characters that are not letters, numbers, ., -, _)
+        // with underscores to prevent issues with file systems and DownloadManager.
         val safeName = withExtension.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        return "${System.currentTimeMillis()}_$safeName"
+        return safeName
     }
 
     /**
