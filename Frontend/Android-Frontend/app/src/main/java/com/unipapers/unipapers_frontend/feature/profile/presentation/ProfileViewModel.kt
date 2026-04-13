@@ -103,27 +103,14 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onUpdateYearSemester(year: Int, semester: Int) {
-        viewModelScope.launch {
-            _state.update { it.copy(isUpdatingProfile = true) }
-            updateNotificationPrefsUseCase(year, semester).fold(
-                onSuccess = {
-                    _state.update {
-                        it.copy(
-                            isUpdatingProfile = false,
-                            showYearSemesterSheet = false,
-                            successMessage = "Profile updated successfully"
-                        )
-                    }
-                    loadMockProfile()
-                },
-                onFailure = { e ->
-                    _state.update {
-                        it.copy(
-                            isUpdatingProfile = false,
-                            error = e.message
-                        )
-                    }
-                }
+        _state.update {
+            it.copy(
+                showYearSemesterSheet = false,
+                successMessage = "Profile updated successfully",
+                user = it.user?.copy(
+                    yearOfStudy = year,
+                    currentSemester = semester
+                )
             )
         }
     }

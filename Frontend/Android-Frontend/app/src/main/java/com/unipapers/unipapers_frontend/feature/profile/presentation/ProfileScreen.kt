@@ -38,6 +38,15 @@ import com.unipapers.unipapers_frontend.feature.profile.presentation.components.
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ProfileStatsRow
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.SettingsSection
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.foundation.layout.Row
 private val NavyBlue = Color(0xFF0D1B4B)
 private val Background = Color(0xFFF8F9FA)
 
@@ -176,5 +185,76 @@ fun ProfileScreen(
                 }
             }
         )
+
+    }
+    if (state.showYearSemesterSheet) {
+        val sheetState = rememberModalBottomSheetState()
+        var selectedYear by remember { mutableStateOf(state.user?.yearOfStudy ?: 1) }
+        var selectedSemester by remember { mutableStateOf(state.user?.currentSemester ?: 1) }
+
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.onDismissYearSemesterSheet() },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Update Year / Semester",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NavyBlue
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(text = "Year of Study", color = NavyBlue, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (1..4).forEach { year ->
+                        FilterChip(
+                            selected = selectedYear == year,
+                            onClick = { selectedYear = year },
+                            label = { Text("Year $year") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NavyBlue,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(text = "Semester", color = NavyBlue, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (1..2).forEach { sem ->
+                        FilterChip(
+                            selected = selectedSemester == sem,
+                            onClick = { selectedSemester = sem },
+                            label = { Text("Semester $sem") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NavyBlue,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { viewModel.onUpdateYearSemester(selectedYear, selectedSemester) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NavyBlue)
+                ) {
+                    Text("Update", color = Color.White)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
     }
 }
