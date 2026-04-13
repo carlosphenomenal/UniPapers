@@ -2,12 +2,12 @@ package com.unipapers.unipapers_frontend.feature.filemanagement.presentation.vie
 
 import android.net.Uri
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.model.FileUploadDto
+import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.GeminiResult
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.SuggestTagsUseCase
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.UploadFileUseCase
@@ -46,14 +46,33 @@ class FileUploadViewModel @Inject constructor(
     private var geminiJob: Job? = null
 
     // Form data states
-    val coursePublicId = mutableStateOf("")
-    val courseName = mutableStateOf("")
-    val fileName = mutableStateOf("")
-    val type = mutableStateOf("")
-    val academicYear = mutableStateOf("")
-    val yearOfStudy = mutableIntStateOf(1)
-    val semester = mutableIntStateOf(1)
     val topicsNames = mutableStateListOf<String>()
+
+    fun onCourseSelected(course: Course) {
+        _state.update {
+            it.copy(
+                selectedCoursePublicId = course.publicId,
+                selectedCourseUnit = course.courseCode,
+                selectedCourseUnitName = course.courseName
+            )
+        }
+    }
+
+    fun onPaperTypeSelected(paperType: String) {
+        _state.update { it.copy(selectedPaperType = paperType) }
+    }
+
+    fun onAcademicYearSelected(academicYear: String) {
+        _state.update { it.copy(selectedAcademicYear = academicYear) }
+    }
+
+    fun onSemesterSelected(semester: String) {
+        _state.update { it.copy(selectedSemester = semester) }
+    }
+
+    fun onYearOfStudySelected(yearOfStudy: String) {
+        _state.update { it.copy(selectedYearOfStudy = yearOfStudy) }
+    }
 
     fun onFileSelected(uri: Uri, name: String, size: String) {
         _state.update { it.copy(
@@ -75,17 +94,7 @@ class FileUploadViewModel @Inject constructor(
                 return@launch
             }
 
-            val fileUploadDto = FileUploadDto(
-                coursePublicId = coursePublicId.value,
-                courseName = courseName.value,
-                fileName = fileName.value,
-                fileHash = fileHash,
-                pastPaperType = type.value,
-                academicYear = academicYear.value,
-                yearOfStudy = yearOfStudy.intValue,
-                semester = semester.intValue,
-                topicsNames = topicsNames.toList()
-            )
+            val fileUploadDto = buildUploadDto(fileHash)
 
             _status.value = UploadStatus.Loading
             uploadFileUseCase(fileUploadDto, file)
@@ -98,6 +107,25 @@ class FileUploadViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    fun buildUploadDto(fileHash: String): FileUploadDto {
+        val currentState = _state.value
+        return FileUploadDto(
+            coursePublicId = currentState.selectedCoursePublicId,
+            courseName = currentState.selectedCourseUnitName.ifBlank { currentState.selectedCourseUnit },
+            fileName = currentState.selectedFileName,
+            fileHash = fileHash,
+            pastPaperType = currentState.selectedPaperType,
+            academicYear = currentState.selectedAcademicYear,
+            yearOfStudy = currentState.selectedYearOfStudy.replace("Year ", "").toIntOrNull() ?: 1,
+            semester = when (currentState.selectedSemester) {
+                "Semester 1" -> 1
+                "Semester 2" -> 2
+                else -> 1
+            },
+            topicsNames = topicsNames.toList()
+        )
     }
 
     fun addTopic(topicName: String) {
@@ -166,8 +194,12 @@ class FileUploadViewModel @Inject constructor(
                     
                     // Auto-fill metadata if confident
                     if (result.response.confidence == "high") {
-                        result.response.metadata.courseName?.let { courseName.value = it }
-                        result.response.metadata.academicYear?.let { academicYear.value = it }
+                        result.response.metadata.courseName?.let { courseName ->
+                            _state.update { it.copy(selectedCourseUnitName = courseName) }
+                        }
+                        result.response.metadata.academicYear?.let { academicYear ->
+                            _state.update { it.copy(selectedAcademicYear = academicYear) }
+                        }
                     }
                 }
                 is GeminiResult.Error -> {
