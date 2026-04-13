@@ -37,7 +37,7 @@ import com.unipapers.unipapers_frontend.feature.profile.presentation.components.
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.MyUploadsSection
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ProfileStatsRow
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.SettingsSection
-
+import androidx.compose.foundation.layout.fillMaxWidth
 private val NavyBlue = Color(0xFF0D1B4B)
 private val Background = Color(0xFFF8F9FA)
 
@@ -105,25 +105,31 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         state.user?.let { user ->
-                            Text(
-                                text = user.fullName,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NavyBlue,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            Text(
-                                text = user.email,
-                                fontSize = 13.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            Text(
-                                text = "${user.programme} · Year ${user.yearOfStudy} Sem ${user.currentSemester}",
-                                fontSize = 13.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = user.fullName,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = NavyBlue,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Text(
+                                    text = user.email,
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Text(
+                                    text = "${user.programme} · Year ${user.yearOfStudy} Sem ${user.currentSemester}",
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))

@@ -2,6 +2,7 @@ package com.unipapers.unipapers_frontend.feature.profile.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.unipapers.unipapers_frontend.core.domain.model.User
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.GetProfileUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdateNotificationPrefsUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdatePasswordUseCase
@@ -24,7 +25,28 @@ class ProfileViewModel @Inject constructor(
     val state: StateFlow<ProfileState> = _state.asStateFlow()
 
     init {
-        loadProfile()
+        loadMockProfile()
+    }
+
+    private fun loadMockProfile() {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                user = User(
+                    id = "1",
+                    fullName = "Gloria Nabukalu",
+                    email = "gloria.nabukalu@students.mak.ac.ug",
+                    studentNumber = "22/U/1234",
+                    programme = "BSc Software Engineering",
+                    yearOfStudy = 2,
+                    currentSemester = 2,
+                    freeViewsRemaining = 3,
+                    hasUnlockedAccess = false,
+                    uploadCount = 4,
+                    downloadCount = 12
+                )
+            )
+        }
     }
 
     fun loadProfile() {
@@ -92,7 +114,7 @@ class ProfileViewModel @Inject constructor(
                             successMessage = "Profile updated successfully"
                         )
                     }
-                    loadProfile()
+                    loadMockProfile()
                 },
                 onFailure = { e ->
                     _state.update {
