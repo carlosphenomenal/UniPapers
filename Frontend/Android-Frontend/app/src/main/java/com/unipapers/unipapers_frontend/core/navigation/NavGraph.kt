@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
+import com.unipapers.unipapers_frontend.feature.home.presentation.HomeScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
 
 @Composable
@@ -25,7 +26,7 @@ fun NavGraph(
         modifier = modifier
     ) {
         composable(Screen.Home.route) {
-            PlaceholderScreen("Home Screen")
+            HomeScreen()
         }
         composable(Screen.Browse.route) {
             PlaceholderScreen("Browse Screen")
