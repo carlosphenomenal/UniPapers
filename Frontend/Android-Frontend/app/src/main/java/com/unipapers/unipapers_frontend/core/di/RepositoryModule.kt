@@ -6,6 +6,10 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.F
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.local.DownloadDao
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.repository.FileRepositoryImpl
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
+import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileRemoteDataSource
+import com.unipapers.unipapers_frontend.feature.profile.data.repository.ProfileRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.profile.domain.repository.ProfileRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,5 +30,21 @@ object RepositoryModule {
         @ApplicationContext context: Context
     ): FileRepository {
         return FileRepositoryImpl(fileApi, cloudUploadApi, downloadDao, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileRemoteDataSource(
+        profileApiService: ProfileApiService
+    ): ProfileRemoteDataSource {
+        return ProfileRemoteDataSource(profileApiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(
+        remoteDataSource: ProfileRemoteDataSource
+    ): ProfileRepository {
+        return ProfileRepositoryImpl(remoteDataSource)
     }
 }
