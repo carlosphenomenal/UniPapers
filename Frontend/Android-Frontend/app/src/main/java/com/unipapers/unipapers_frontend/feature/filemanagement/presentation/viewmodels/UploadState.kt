@@ -15,6 +15,7 @@ data class UploadState(
     val selectedFileSize: String = "",
 
     // ── Step 2 — Paper details ────────────────────────────────
+    val selectedCoursePublicId: String = "",
     val selectedCourseUnit: String = "",
     val selectedCourseUnitName: String = "",
     val selectedPaperType: String = "",
@@ -55,7 +56,8 @@ data class UploadState(
         get() = selectedFileUri != null
 
     val canProceedFromStep2: Boolean
-        get() = selectedCourseUnit.isNotBlank() &&
+        get() = selectedCoursePublicId.isNotBlank() &&
+                selectedCourseUnit.isNotBlank() &&
                 selectedPaperType.isNotBlank() &&
                 selectedAcademicYear.isNotBlank() &&
                 selectedSemester.isNotBlank() &&

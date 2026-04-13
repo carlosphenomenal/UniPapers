@@ -21,11 +21,13 @@ import androidx.compose.ui.unit.dp
 import com.unipapers.unipapers_frontend.core.ui.theme.Gray
 import com.unipapers.unipapers_frontend.core.ui.theme.GrayText
 import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
+import com.unipapers.unipapers_frontend.core.domain.model.Course
 
 @Composable
 fun DetailsScreen(
-    courseUnit: String,
-    onCourseUnitChange: (String) -> Unit,
+    courses: List<Course>,
+    selectedCoursePublicId: String,
+    onCourseSelected: (Course) -> Unit,
     paperType: String,
     onPaperTypeChange: (String) -> Unit,
     academicYear: String,
@@ -59,11 +61,11 @@ fun DetailsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        DetailSection(
+        CourseDetailSection(
             title = "Course Unit",
-            items = listOf("CSC 1100", "CSC 1200", "CSC 2100", "CSC 2200"),
-            selectedItem = courseUnit,
-            onItemSelected = onCourseUnitChange
+            items = courses,
+            selectedCoursePublicId = selectedCoursePublicId,
+            onCourseSelected = onCourseSelected
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -103,6 +105,37 @@ fun DetailsScreen(
         )
         
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun CourseDetailSection(
+    title: String,
+    items: List<Course>,
+    selectedCoursePublicId: String,
+    onCourseSelected: (Course) -> Unit
+) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = GrayText
+            )
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(end = 24.dp)
+        ) {
+            items(items) { item ->
+                SelectionChip(
+                    text = item.courseCode,
+                    isSelected = selectedCoursePublicId == item.publicId,
+                    onClick = { onCourseSelected(item) }
+                )
+            }
+        }
     }
 }
 
@@ -168,5 +201,17 @@ fun SelectionChip(
 @Preview(showBackground = true)
 @Composable
 fun DetailsScreenPreview() {
-    DetailsScreen(courseUnit = "", onCourseUnitChange = {}, paperType = "", onPaperTypeChange = {}, academicYear = "", onAcademicYearChange = {}, semester = "", onSemesterChange = {}, yearOfStudy = "", onYearOfStudyChange = {})
+    DetailsScreen(
+        courses = listOf(Course(publicId = "course-1", courseCode = "CSC 1100")),
+        selectedCoursePublicId = "",
+        onCourseSelected = {},
+        paperType = "",
+        onPaperTypeChange = {},
+        academicYear = "",
+        onAcademicYearChange = {},
+        semester = "",
+        onSemesterChange = {},
+        yearOfStudy = "",
+        onYearOfStudyChange = {}
+    )
 }

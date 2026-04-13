@@ -2,6 +2,7 @@ package com.unipapers.unipapers_frontend.feature.filemanagement.presentation.vie
 
 import android.net.Uri
 import app.cash.turbine.test
+import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.AnalysisResponse
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.GeminiResult
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.PaperMetadata
@@ -61,20 +62,47 @@ class FileUploadViewModelTest {
 
         // Then
         viewModel.uiState.test {
-            val initialState = awaitItem()
-            
+            awaitItem()
+
             // Advance until Gemini starts loading
-            testScheduler.advanceUntilIdle()
-            
-            val finalState = awaitItem()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val finalState = expectMostRecentItem()
             assertEquals(false, finalState.isLoadingTags)
             assertEquals(mockTags, finalState.suggestedTags)
             assertEquals(mockMetadata, finalState.geminiMetadata)
             
             // Verify auto-fill worked because confidence was "high"
-            assertEquals("Mobile Dev", viewModel.courseName.value)
-            assertEquals("2024", viewModel.academicYear.value)
+            assertEquals("Mobile Dev", finalState.selectedCourseUnitName)
+            assertEquals("2024", finalState.selectedAcademicYear)
         }
+    }
+
+    @Test
+    fun `buildUploadDto reads from shared upload state`() = runTest {
+        viewModel.onCourseSelected(
+            Course(
+                publicId = "course-public-id-123",
+                courseCode = "CSC 1100",
+                courseName = "Introduction to Computing"
+            )
+        )
+        viewModel.onPaperTypeSelected("Exam")
+        viewModel.onAcademicYearSelected("2024/2025")
+        viewModel.onSemesterSelected("Semester 2")
+        viewModel.onYearOfStudySelected("Year 3")
+        viewModel.onFileSelected(mockk<Uri>(), "paper.pdf", "100KB")
+        viewModel.topicsNames.addAll(listOf("Kotlin", "Android"))
+
+        val dto = viewModel.buildUploadDto("mocked-file-hash")
+        assertEquals("course-public-id-123", dto.coursePublicId)
+        assertEquals("Introduction to Computing", dto.courseName)
+        assertEquals("paper.pdf", dto.fileName)
+        assertEquals("Exam", dto.pastPaperType)
+        assertEquals("2024/2025", dto.academicYear)
+        assertEquals(3, dto.yearOfStudy)
+        assertEquals(2, dto.semester)
+        assertEquals(listOf("Kotlin", "Android"), dto.topicsNames)
     }
 
     @Test
@@ -89,7 +117,7 @@ class FileUploadViewModelTest {
 
         // Then
         viewModel.uiState.test {
-            testScheduler.advanceUntilIdle()
+            testDispatcher.scheduler.advanceUntilIdle()
             val state = expectMostRecentItem()
             assertEquals(false, state.isLoadingTags)
             assertTrue(state.tagError!!.contains("Could not extract tags"))

@@ -45,6 +45,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.unipapers.unipapers_frontend.R
 import com.unipapers.unipapers_frontend.core.navigation.PlaceholderScreen
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.core.ui.theme.GrayText
 import com.unipapers.unipapers_frontend.core.ui.theme.NextButtonColor
 import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
@@ -65,21 +66,22 @@ fun UploadFlowScreen(
     
     var activeStep by remember { mutableIntStateOf(0) }
     
-    // Valid options for strict validation (matching DetailsScreen)
-    val courseUnits = listOf("CSC 1100", "CSC 1200", "CSC 2100", "CSC 2200")
+    // Course options should mirror backend courses and carry the public ID used by upload DTOs.
+    val courses = remember {
+        listOf(
+            Course(publicId = "01JCSC1100000000000000001", courseCode = "CSC 1100"),
+            Course(publicId = "01JCSC1200000000000000002", courseCode = "CSC 1200"),
+            Course(publicId = "01JCSC2100000000000000003", courseCode = "CSC 2100"),
+            Course(publicId = "01JCSC2100000000000000004", courseCode = "CSC 2200")
+        )
+    }
     val paperTypes = listOf("Exam", "Test")
     val academicYears = listOf("2024/2025", "2023/2024", "2022/2023", "2021/2022")
     val semesters = listOf("Semester 1", "Semester 2")
     val yearOfStudies = listOf("Year 1", "Year 2", "Year 3", "Year 4")
 
-    // State for validation
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
-    var courseUnit by remember { mutableStateOf("") }
-    var paperType by remember { mutableStateOf("") }
-    var academicYear by remember { mutableStateOf("") }
-    var semester by remember { mutableStateOf("") }
-    var yearOfStudy by remember { mutableStateOf("") }
-    
+
     // Tags state
     var allTags by remember { mutableStateOf(emptyList<String>()) }
     var selectedTags by remember { mutableStateOf(emptyList<String>()) }
@@ -87,20 +89,28 @@ fun UploadFlowScreen(
     // Sync Gemini Metadata to local state when it arrives
     LaunchedEffect(uiState.geminiMetadata) {
         uiState.geminiMetadata?.let { metadata ->
-            if (courseUnit.isEmpty()) {
-                metadata.courseCode?.let { if (courseUnits.contains(it)) courseUnit = it }
+            if (uiState.selectedCoursePublicId.isBlank()) {
+                metadata.courseCode?.let { code ->
+                    courses.firstOrNull { it.courseCode == code }?.let { matchedCourse ->
+                        viewModel.onCourseSelected(
+                            matchedCourse.copy(
+                                courseName = metadata.courseName ?: matchedCourse.courseName
+                            )
+                        )
+                    }
+                }
             }
-            if (academicYear.isEmpty()) {
-                metadata.academicYear?.let { if (academicYears.contains(it)) academicYear = it }
+            if (uiState.selectedAcademicYear.isBlank()) {
+                metadata.academicYear?.let { if (academicYears.contains(it)) viewModel.onAcademicYearSelected(it) }
             }
-            if (semester.isEmpty()) {
-                metadata.semester?.let { if (semesters.contains(it)) semester = it }
+            if (uiState.selectedSemester.isBlank()) {
+                metadata.semester?.let { if (semesters.contains(it)) viewModel.onSemesterSelected(it) }
             }
-            if (yearOfStudy.isEmpty()) {
-                metadata.yearOfStudy?.let { if (yearOfStudies.contains(it)) yearOfStudy = it }
+            if (uiState.selectedYearOfStudy.isBlank()) {
+                metadata.yearOfStudy?.let { if (yearOfStudies.contains(it)) viewModel.onYearOfStudySelected(it) }
             }
-            if (paperType.isEmpty()) {
-                metadata.paperType?.let { if (paperTypes.contains(it)) paperType = it }
+            if (uiState.selectedPaperType.isBlank()) {
+                metadata.paperType?.let { if (paperTypes.contains(it)) viewModel.onPaperTypeSelected(it) }
             }
         }
     }
@@ -135,11 +145,11 @@ fun UploadFlowScreen(
     }
 
     val isStep0Valid = selectedFileUri != null
-    val isStep1Valid = courseUnits.contains(courseUnit) && 
-                      paperTypes.contains(paperType) && 
-                      academicYears.contains(academicYear) && 
-                      semesters.contains(semester) && 
-                      yearOfStudies.contains(yearOfStudy)
+    val isStep1Valid = uiState.canProceedFromStep2 &&
+            paperTypes.contains(uiState.selectedPaperType) &&
+            academicYears.contains(uiState.selectedAcademicYear) &&
+            semesters.contains(uiState.selectedSemester) &&
+            yearOfStudies.contains(uiState.selectedYearOfStudy)
     val isStep2Valid = selectedTags.isNotEmpty()
 
     val isNextEnabled = when (activeStep) {
@@ -157,23 +167,9 @@ fun UploadFlowScreen(
         if (uri != null) {
             val file = PaperFileUtils.copyUriToFile(context, uri)
             if (file != null) {
-                // Prepare ViewModel state
-                viewModel.courseName.value = courseUnit
-                viewModel.type.value = paperType
-                viewModel.academicYear.value = academicYear
-                viewModel.semester.intValue = when(semester) {
-                    "Semester 1" -> 1
-                    "Semester 2" -> 2
-                    else -> 1
-                }
-                viewModel.yearOfStudy.intValue = yearOfStudy.replace("Year ", "").toIntOrNull() ?: 1
-                
                 // Sync tags
                 viewModel.topicsNames.clear()
                 viewModel.topicsNames.addAll(selectedTags)
-                
-                // Set file name if not already set
-                viewModel.fileName.value = uiState.selectedFileName
                 
                 viewModel.uploadFile(file)
             }
@@ -243,16 +239,17 @@ fun UploadFlowScreen(
                             toastManager = toastManager
                         )
                         1 -> DetailsScreen(
-                            courseUnit = courseUnit,
-                            onCourseUnitChange = { courseUnit = it },
-                            paperType = paperType,
-                            onPaperTypeChange = { paperType = it },
-                            academicYear = academicYear,
-                            onAcademicYearChange = { academicYear = it },
-                            semester = semester,
-                            onSemesterChange = { semester = it },
-                            yearOfStudy = yearOfStudy,
-                            onYearOfStudyChange = { yearOfStudy = it }
+                            courses = courses,
+                            selectedCoursePublicId = uiState.selectedCoursePublicId,
+                            onCourseSelected = viewModel::onCourseSelected,
+                            paperType = uiState.selectedPaperType,
+                            onPaperTypeChange = viewModel::onPaperTypeSelected,
+                            academicYear = uiState.selectedAcademicYear,
+                            onAcademicYearChange = viewModel::onAcademicYearSelected,
+                            semester = uiState.selectedSemester,
+                            onSemesterChange = viewModel::onSemesterSelected,
+                            yearOfStudy = uiState.selectedYearOfStudy,
+                            onYearOfStudyChange = viewModel::onYearOfStudySelected
                         )
                         2 -> TagsSelectionScreen(
                             allTags = allTags,
@@ -272,11 +269,11 @@ fun UploadFlowScreen(
                             }
                         )
                         3 -> ReviewSubmitScreen(
-                            courseUnit = courseUnit,
-                            paperType = paperType,
-                            academicYear = academicYear,
-                            semester = semester,
-                            yearOfStudy = yearOfStudy,
+                            courseUnit = uiState.selectedCourseUnit,
+                            paperType = uiState.selectedPaperType,
+                            academicYear = uiState.selectedAcademicYear,
+                            semester = uiState.selectedSemester,
+                            yearOfStudy = uiState.selectedYearOfStudy,
                             fileName = uiState.selectedFileName.ifEmpty { "Selected File" },
                             selectedTags = selectedTags
                         )
