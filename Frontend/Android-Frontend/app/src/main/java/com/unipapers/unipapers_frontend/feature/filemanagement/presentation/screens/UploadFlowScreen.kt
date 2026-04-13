@@ -81,7 +81,7 @@ fun UploadFlowScreen(
     var yearOfStudy by remember { mutableStateOf("") }
     
     // Tags state
-    var allTags by remember { mutableStateOf(listOf("Binary Trees", "Graphs", "Sorting Algorithms", "Big-O Notation", "Dynamic Programming", "Hashing", "Linked Lists")) }
+    var allTags by remember { mutableStateOf(emptyList<String>()) }
     var selectedTags by remember { mutableStateOf(emptyList<String>()) }
 
     // Sync Gemini Metadata to local state when it arrives

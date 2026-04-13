@@ -10,7 +10,9 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.Gemi
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.PaperMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Named
@@ -103,13 +105,17 @@ class GeminiService @Inject constructor(
 
         // ── Send to Gemini ────────────────────────────────────
         val raw = try {
-            val response = model.generateContent(
-                content {
-                    blob(mimeType, bytes)
-                    text(EXTRACTION_PROMPT)
-                }
-            )
+            val response = withTimeout(45000L) {
+                model.generateContent(
+                    content {
+                        blob(mimeType, bytes)
+                        text(EXTRACTION_PROMPT)
+                    }
+                )
+            }
             response.text ?: return@withContext GeminiResult.Error("Gemini returned empty response.")
+        } catch (e: TimeoutCancellationException) {
+            return@withContext GeminiResult.Error("AI analysis timed out after 45 seconds. Please manually add paper tags.")
         } catch (e: Exception) {
             return@withContext GeminiResult.Error("Gemini API error: ${e.message}")
         }

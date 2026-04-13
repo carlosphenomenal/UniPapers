@@ -1,7 +1,7 @@
 package com.unipapers.unipapers_frontend.core.di
 
 object NetworkConfig {
-    const val BASE_URL = "https://192.168.43.11:8080/api/" // Replace the IP address with your machine's IP
+    const val BASE_URL = "http://192.168.43.11:8080/api/" // Replace the IP address with your machine's IP
 
     /**
      * Endpoints that require an Authorization header.
