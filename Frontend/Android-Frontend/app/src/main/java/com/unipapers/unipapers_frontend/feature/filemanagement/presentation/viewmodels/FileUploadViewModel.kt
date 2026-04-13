@@ -175,7 +175,7 @@ class FileUploadViewModel @Inject constructor(
                         it.copy(
                             isLoadingTags = false,
                             suggestedTags = emptyList(),
-                            tagError = "Could not extract tags automatically. Add them manually."
+                            tagError = result.message
                         )
                     }
                 }
