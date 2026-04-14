@@ -15,13 +15,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.feature.home.domain.Paper
 import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
+import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.Amber
+import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
+import com.unipapers.unipapers_frontend.core.ui.theme.TealGreen
+import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
+import com.unipapers.unipapers_frontend.core.ui.theme.LightGray
 
-val NavyBlue = Color(0xFF0D1B4B)
-val Amber = Color(0xFFF5A623)
-val NearWhite = Color(0xFFF8F9FA)
-val TealGreen = Color(0xFF00897B)
-val MediumGray = Color(0xFF9E9E9E)
-val LightGray = Color(0xFFE0E0E0)
+
 
 @Composable
 fun PaperCard(paper: Paper) {

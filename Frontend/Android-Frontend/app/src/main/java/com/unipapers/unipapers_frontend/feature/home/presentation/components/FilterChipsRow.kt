@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
+import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 
 @Composable
 fun FilterChipsRow(
