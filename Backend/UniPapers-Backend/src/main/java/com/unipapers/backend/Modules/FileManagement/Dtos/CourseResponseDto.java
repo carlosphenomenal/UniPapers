@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +13,4 @@ public class CourseResponseDto {
     private String publicId;
     private String courseCode;
     private String courseName;
-    private Instant createdAt;
-    private Instant updatedAt;
 }

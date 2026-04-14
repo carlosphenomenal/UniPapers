@@ -3,6 +3,7 @@ package com.unipapers.backend.Modules.FileManagement.Models;
 import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Builder
 @Table(name = "courses", indexes = {
         @Index(name = "idx_course_public_id", columnList = "publicId"),
         @Index(name = "idx_course_code", columnList = "courseCode"),

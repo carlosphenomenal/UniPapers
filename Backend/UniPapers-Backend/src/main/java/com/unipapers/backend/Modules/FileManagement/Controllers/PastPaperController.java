@@ -1,3 +1,7 @@
+package com.unipapers.backend.Modules.FileManagement.Controllers;
+
+import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
+import com.unipapers.backend.Modules.FileManagement.Services.PastPaperService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
