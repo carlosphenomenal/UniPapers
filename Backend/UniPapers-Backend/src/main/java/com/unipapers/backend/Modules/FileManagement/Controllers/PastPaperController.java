@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pastpapers")
+@RequestMapping("/pastpapers")
 @RequiredArgsConstructor
 
 public class PastPaperController {
     private final PastPaperService pastPaperService;
 
-    @GetMapping
+    @GetMapping("/get")
     public ResponseEntity<List<PastPaper>> getAllPastPapers() {
         return ResponseEntity.ok(pastPaperService.getAllPastPapers());
     }
