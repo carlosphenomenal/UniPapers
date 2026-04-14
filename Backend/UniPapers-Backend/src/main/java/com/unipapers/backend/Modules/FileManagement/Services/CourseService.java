@@ -43,8 +43,6 @@ public class CourseService {
                 .publicId(course.getPublicId())
                 .courseCode(course.getCourseCode())
                 .courseName(course.getCourseName())
-                .createdAt(course.getCreatedAt())
-                .updatedAt(course.getUpdatedAt())
                 .build();
     }
 }
