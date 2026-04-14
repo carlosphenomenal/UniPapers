@@ -47,6 +47,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.foundation.layout.Row
+
 private val NavyBlue = Color(0xFF0D1B4B)
 private val Background = Color(0xFFF8F9FA)
 
@@ -114,31 +115,25 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         state.user?.let { user ->
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = user.fullName,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = NavyBlue,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                                Text(
-                                    text = user.email,
-                                    fontSize = 13.sp,
-                                    color = Color.Gray,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                                Text(
-                                    text = "${user.programme} · Year ${user.yearOfStudy} Sem ${user.currentSemester}",
-                                    fontSize = 13.sp,
-                                    color = Color.Gray,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                )
-                            }
+                            Text(
+                                text = user.fullName,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NavyBlue,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Text(
+                                text = user.email,
+                                fontSize = 13.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Text(
+                                text = "${user.programme} · Year ${user.yearOfStudy} Sem ${user.currentSemester}",
+                                fontSize = 13.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -185,76 +180,5 @@ fun ProfileScreen(
                 }
             }
         )
-
-    }
-    if (state.showYearSemesterSheet) {
-        val sheetState = rememberModalBottomSheetState()
-        var selectedYear by remember { mutableStateOf(state.user?.yearOfStudy ?: 1) }
-        var selectedSemester by remember { mutableStateOf(state.user?.currentSemester ?: 1) }
-
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.onDismissYearSemesterSheet() },
-            sheetState = sheetState,
-            containerColor = Color.White
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                Text(
-                    text = "Update Year / Semester",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = NavyBlue
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(text = "Year of Study", color = NavyBlue, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    (1..4).forEach { year ->
-                        FilterChip(
-                            selected = selectedYear == year,
-                            onClick = { selectedYear = year },
-                            label = { Text("Year $year") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = NavyBlue,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(text = "Semester", color = NavyBlue, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    (1..2).forEach { sem ->
-                        FilterChip(
-                            selected = selectedSemester == sem,
-                            onClick = { selectedSemester = sem },
-                            label = { Text("Semester $sem") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = NavyBlue,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = { viewModel.onUpdateYearSemester(selectedYear, selectedSemester) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = NavyBlue)
-                ) {
-                    Text("Update", color = Color.White)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
     }
 }

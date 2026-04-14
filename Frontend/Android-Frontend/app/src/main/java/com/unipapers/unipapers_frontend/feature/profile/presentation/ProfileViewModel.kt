@@ -47,6 +47,7 @@ class ProfileViewModel @Inject constructor(
                 )
             )
         }
+        loadProfile()
     }
 
     fun loadProfile() {
@@ -115,6 +116,7 @@ class ProfileViewModel @Inject constructor(
                         )
                     }
                     loadMockProfile()
+                    loadProfile()
                 },
                 onFailure = { e ->
                     _state.update {
