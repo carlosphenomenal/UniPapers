@@ -12,6 +12,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.feature.home.domain.CourseUnit
+import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 
 @Composable
 fun CourseUnitTile(unit: CourseUnit) {

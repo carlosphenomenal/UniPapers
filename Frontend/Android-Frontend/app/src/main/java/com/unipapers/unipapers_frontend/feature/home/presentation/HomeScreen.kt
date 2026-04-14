@@ -22,10 +22,10 @@ import com.unipapers.unipapers_frontend.feature.home.presentation.components.Cou
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.ContinueStudyingSection
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.NavyBlue
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.NearWhite
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.MediumGray
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.Amber
+import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
+import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
+import com.unipapers.unipapers_frontend.core.ui.theme.Amber
 
 @Composable
 fun HomeScreen(
@@ -127,8 +127,6 @@ fun HomeHeader(userName: String) {
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "😁😁😝", fontSize = 20.sp)
                 }
             }
 

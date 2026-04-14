@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,6 +18,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.feature.home.domain.ContinueStudyingItem
+import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.Amber
+import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
+import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 
 @Composable
 fun ContinueStudyingSection(items: List<ContinueStudyingItem>) {
