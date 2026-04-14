@@ -1,5 +1,6 @@
 package com.unipapers.backend.Modules.FileManagement.Services;
 
+import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Modules.FileManagement.Dtos.CourseResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.CreateCourseDto;
 import com.unipapers.backend.Modules.FileManagement.Models.Course;
@@ -34,7 +35,7 @@ public class CourseService {
 
     public void deleteCourse(String publicId) {
         Course course = courseRepo.findByPublicId(publicId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new CourseNotFoundException("Course not found"));
         courseRepo.delete(course);
     }
 
