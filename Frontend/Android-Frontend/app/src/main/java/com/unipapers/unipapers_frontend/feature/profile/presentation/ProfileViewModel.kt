@@ -35,15 +35,15 @@ class ProfileViewModel @Inject constructor(
                 user = User(
                     id = "1",
                     fullName = "Gloria Nabukalu",
-                    email = "gloria.nabukalu@students.mak.ac.ug",
+                    email = "ria.kalu@students.mak.ac.ug",
                     studentNumber = "22/U/1234",
                     programme = "BSc Software Engineering",
                     yearOfStudy = 2,
                     currentSemester = 2,
-                    freeViewsRemaining = 3,
+                    freeViewsRemaining = 2,
                     hasUnlockedAccess = false,
-                    uploadCount = 4,
-                    downloadCount = 12
+                    uploadCount = 0,
+                    downloadCount = 1
                 )
             )
         }
@@ -103,14 +103,27 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onUpdateYearSemester(year: Int, semester: Int) {
-        _state.update {
-            it.copy(
-                showYearSemesterSheet = false,
-                successMessage = "Profile updated successfully",
-                user = it.user?.copy(
-                    yearOfStudy = year,
-                    currentSemester = semester
-                )
+        viewModelScope.launch {
+            _state.update { it.copy(isUpdatingProfile = true) }
+            updateNotificationPrefsUseCase(year, semester).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            isUpdatingProfile = false,
+                            showYearSemesterSheet = false,
+                            successMessage = "Profile updated successfully"
+                        )
+                    }
+                    loadMockProfile()
+                },
+                onFailure = { e ->
+                    _state.update {
+                        it.copy(
+                            isUpdatingProfile = false,
+                            error = e.message
+                        )
+                    }
+                }
             )
         }
     }
