@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
-
+import com.unipapers.unipapers_frontend.feature.home.presentation.HomeScreen
 @Composable
 fun NavGraph(
     navController: NavHostController,
