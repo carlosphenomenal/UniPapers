@@ -1,6 +1,9 @@
-package com.unipapers.backend.Modules.FileManagement.Models;
+package com.unipapers.backend.Modules.Course.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
+import com.unipapers.backend.Modules.FileManagement.Models.Program;
+import com.unipapers.backend.Modules.FileManagement.Models.Topic;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.FileManagement.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Modules.Course.Models.Course;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
 import com.unipapers.backend.Modules.FileManagement.Enums.UploadStatus;
 import com.unipapers.backend.Modules.FileManagement.Enums.VerificationStatus;

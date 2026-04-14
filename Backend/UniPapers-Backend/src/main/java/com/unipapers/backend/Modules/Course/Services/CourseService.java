@@ -1,10 +1,10 @@
-package com.unipapers.backend.Modules.FileManagement.Services;
+package com.unipapers.backend.Modules.Course.Services;
 
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
-import com.unipapers.backend.Modules.FileManagement.Dtos.CourseResponseDto;
-import com.unipapers.backend.Modules.FileManagement.Dtos.CreateCourseDto;
-import com.unipapers.backend.Modules.FileManagement.Models.Course;
-import com.unipapers.backend.Modules.FileManagement.Repositories.CourseRepo;
+import com.unipapers.backend.Modules.Course.Dtos.CourseResponseDto;
+import com.unipapers.backend.Modules.Course.Dtos.CreateCourseDto;
+import com.unipapers.backend.Modules.Course.Models.Course;
+import com.unipapers.backend.Modules.Course.Repositories.CourseRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

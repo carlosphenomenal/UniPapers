@@ -1,4 +1,4 @@
-package com.unipapers.backend.Modules.FileManagement.Dtos;
+package com.unipapers.backend.Modules.Course.Dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseResponseDto {
-    private String publicId;
+public class CreateCourseDto {
     private String courseCode;
     private String courseName;
 }

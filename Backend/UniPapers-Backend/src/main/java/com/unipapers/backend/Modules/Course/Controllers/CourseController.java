@@ -1,8 +1,8 @@
-package com.unipapers.backend.Modules.FileManagement.Controllers;
+package com.unipapers.backend.Modules.Course.Controllers;
 
-import com.unipapers.backend.Modules.FileManagement.Dtos.CourseResponseDto;
-import com.unipapers.backend.Modules.FileManagement.Dtos.CreateCourseDto;
-import com.unipapers.backend.Modules.FileManagement.Services.CourseService;
+import com.unipapers.backend.Modules.Course.Dtos.CourseResponseDto;
+import com.unipapers.backend.Modules.Course.Dtos.CreateCourseDto;
+import com.unipapers.backend.Modules.Course.Services.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
