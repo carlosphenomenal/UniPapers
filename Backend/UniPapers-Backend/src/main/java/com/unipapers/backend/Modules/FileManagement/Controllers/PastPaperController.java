@@ -16,8 +16,8 @@ public class PastPaperController {
         return ResponseEntity.ok(pastPaperService.getAllPastPapers());
     }
 
-    @PostMapping
-    public ResponseEntity<PastPaper> createPastPaper(@RequestBody PastPaper pastPaper)
-    }
+//    @PostMapping
+//    public ResponseEntity<PastPaper> createPastPaper(@RequestBody PastPaper pastPaper)
+//    }
 
 }
