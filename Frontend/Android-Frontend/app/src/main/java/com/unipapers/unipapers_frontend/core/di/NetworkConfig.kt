@@ -1,7 +1,11 @@
 package com.unipapers.unipapers_frontend.core.di
 
+import com.unipapers.unipapers_frontend.BuildConfig
+
 object NetworkConfig {
-    const val BASE_URL = "http://192.168.1.3:8080/api/" // Replace the IP address with your machine's IP
+    val BASE_URL: String by lazy {
+        BuildConfig::class.java.getField("BASE_URL").get(null) as String
+    }
 
     /**
      * Endpoints that require an Authorization header.
