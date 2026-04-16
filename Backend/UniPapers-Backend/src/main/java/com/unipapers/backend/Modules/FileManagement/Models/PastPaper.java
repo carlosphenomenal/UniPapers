@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.FileManagement.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Common.Models.User;
 import com.unipapers.backend.Modules.Course.Models.Course;
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
 import com.unipapers.backend.Modules.FileManagement.Enums.UploadStatus;
@@ -57,6 +58,10 @@ public class PastPaper {
 
     @OneToMany(mappedBy = "pastPaper", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Topic> topics;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uploaded_by")
+    private User uploadedBy;
 
     private Instant addedAt;
 

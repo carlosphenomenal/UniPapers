@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.FileManagement.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Common.Models.User;
 import com.unipapers.backend.Modules.Course.Models.Course;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,9 @@ public class Program {
 
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Course> courses;
+
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<User> users;
 
     @PrePersist
     public void generateUlid() {
