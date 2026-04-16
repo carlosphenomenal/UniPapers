@@ -1,37 +1,69 @@
 package com.unipapers.unipapers_frontend.feature.home.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.ContinueStudyingSection
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
+import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
-import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
-import com.unipapers.unipapers_frontend.core.ui.theme.Amber
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
+import com.unipapers.unipapers_frontend.feature.home.domain.ContinueStudyingItem
+import com.unipapers.unipapers_frontend.feature.home.domain.CourseUnit
+import com.unipapers.unipapers_frontend.feature.home.domain.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
+import com.unipapers.unipapers_frontend.feature.home.presentation.components.ContinueStudyingSection
+import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
+import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
+import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    
+    HomeScreenContent(
+        state = state,
+        onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
+        onFilterSelected = { viewModel.onFilterSelected(it) }
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    state: HomeState,
+    onSearchQueryChanged: (String) -> Unit,
+    onFilterSelected: (PaperType?) -> Unit
+) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -39,60 +71,58 @@ fun HomeScreen(
             .fillMaxSize()
             .background(NearWhite)
             .verticalScroll(scrollState)
-            .padding(bottom = 24.dp)
+            .padding(bottom = 32.dp)
     ) {
         // Top header
-        HomeHeader(userName = state.userName)
+        HomeHeader()
 
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .offset(y = (-8).dp)
+        ) {
             // Search bar
             HomeSearchBar(
                 query = state.searchQuery,
-                onQueryChange = { viewModel.onSearchQueryChanged(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Filter chips
-            FilterChipsRow(
-                selectedFilter = state.selectedFilter,
-                onFilterSelected = { viewModel.onFilterSelected(it) }
+                onQueryChange = onSearchQueryChanged
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            HomeSectionHeading(title = "Recently Uploaded")
+            // Filter chips
+            FilterChipsRow(
+                selectedFilter = state.selectedFilter,
+                onFilterSelected = onFilterSelected
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            HomeSectionHeading(title = "Recent Papers")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Horizontal scrolling paper cards
         RecentPapersRow(papers = state.filteredPapers)
-
+        
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            HomeSectionHeading(title = "Browse by Course Unit")
+            HomeSectionHeading(title = "Recommended for you")
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Course unit grid
-            CourseUnitGrid(courseUnits = state.courseUnits)
+            CourseUnitGrid(papers = state.papers)
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             HomeSectionHeading(title = "Continue Studying")
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Continue studying cards
             ContinueStudyingSection(items = state.continueStudying)
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -102,59 +132,20 @@ fun HomeScreen(
 // ─────────────────────────────────────────────
 
 @Composable
-fun HomeHeader(userName: String) {
-    Box(
+fun HomeHeader() {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(NavyBlue)
             .padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Good morning,",
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = userName,
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            // Icons top right
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = Color.White
-                    )
-                }
-                BadgedBox(
-                    badge = {
-                        Badge(containerColor = Amber) {
-                            Text("2", fontSize = 10.sp, color = NavyBlue)
-                        }
-                    }
-                ) {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "UniPapers",
+                color = SimpleBlue,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
@@ -168,33 +159,43 @@ fun HomeSearchBar(
     query: String,
     onQueryChange: (String) -> Unit
 ) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        placeholder = {
-            Text(
-                text = "Search topic, course unit, or paper type...",
-                color = MediumGray,
-                fontSize = 13.sp
-            )
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = MediumGray
-            )
-        },
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = NavyBlue,
-            unfocusedBorderColor = Color(0xFFE0E0E0),
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White
-        ),
-        singleLine = true
-    )
+        shape = androidx.compose.foundation.shape.CircleShape,
+        color = Color.White,
+        shadowElevation = 4.dp
+    ) {
+        TextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text(
+                    text = "Search by course, code, program...",
+                    color = MediumGray,
+                    fontSize = 14.sp,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = MediumGray,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = NavyBlue
+            ),
+            singleLine = true
+        )
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -205,9 +206,9 @@ fun HomeSearchBar(
 fun HomeSectionHeading(title: String) {
     Text(
         text = title,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Bold,
-        color = NavyBlue
+        fontSize = 20.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = SimpleBlue
     )
 }
 
@@ -218,5 +219,33 @@ fun HomeSectionHeading(title: String) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
+    val samplePaper1 = Paper(
+        id = "1",
+        title = "Introduction to Computer Science",
+        courseUnit = "CS101",
+        type = PaperType.EXAM,
+        academicYear = "2023/2024",
+        uploadedBy = "Admin",
+        timeAgo = "2 days ago",
+        pageCount = 12
+    )
+    val samplePaper2 = samplePaper1.copy(id = "2")
+    val samplePaper3 = samplePaper1.copy(id = "3")
+
+    HomeScreenContent(
+        state = HomeState(
+            userName = "Victory",
+            filteredPapers = listOf(samplePaper1, samplePaper2),
+            courseUnits = listOf(
+                CourseUnit("CS101", "Computer Science", 15),
+                CourseUnit("MA102", "Mathematics", 8)
+            ),
+            continueStudying = listOf(
+                ContinueStudyingItem(samplePaper1, 45)
+            ),
+            papers = listOf(samplePaper1, samplePaper2, samplePaper3)
+        ),
+        onSearchQueryChanged = {},
+        onFilterSelected = {}
+    )
 }
