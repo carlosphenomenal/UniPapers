@@ -54,24 +54,8 @@ class ProfileViewModel @Inject constructor(
                 }
             }
         }
-        loadProfile()
     }
 
-    fun loadProfile() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
-            getProfileUseCase().fold(
-                onSuccess = { user ->
-                    // Note: Here you would map the User to ProfileResponse if using the real API
-                    // For now, keeping it consistent with the UI expectation
-                    _state.update { it.copy(isLoading = false) }
-                },
-                onFailure = { e ->
-                    _state.update { it.copy(isLoading = false, error = e.message) }
-                }
-            )
-        }
-    }
 
     fun onShowChangePasswordModal() {
         _state.update { it.copy(showChangePasswordModal = true) }
@@ -125,7 +109,7 @@ class ProfileViewModel @Inject constructor(
                         )
                     }
                     loadMockProfile()
-                    loadProfile()
+
                 },
                 onFailure = { e ->
                     _state.update {
