@@ -12,26 +12,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-
-private val NavyBlue = Color(0xFF0D1B4B)
-private val Amber = Color(0xFFF5A623)
+import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryOrange
 
 @Composable
 fun ChangePasswordModal(
@@ -48,53 +42,39 @@ fun ChangePasswordModal(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color.White
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
+
                 Text(
-                    text = "Change Password",
-                    fontSize = 18.sp,
+                    "Change Password",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = NavyBlue
+                    color = PrimaryBlue
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = currentPassword,
-                    onValueChange = { currentPassword = it },
-                    label = { Text("Current Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                PasswordField("Current Password", currentPassword) {
+                    currentPassword = it
+                }
 
-                OutlinedTextField(
-                    value = newPassword,
-                    onValueChange = { newPassword = it },
-                    label = { Text("New Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                PasswordField("New Password", newPassword) {
+                    newPassword = it
+                }
 
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text("Confirm New Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                PasswordField("Confirm Password", confirmPassword) {
+                    confirmPassword = it
+                }
 
                 val displayError = localError ?: errorMessage
-                if (displayError != null) {
+
+                displayError?.let {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = displayError, color = Color.Red, fontSize = 13.sp)
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -103,32 +83,61 @@ fun ChangePasswordModal(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
+
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = Color.Gray)
+                        Text("Cancel")
                     }
+
                     Button(
                         onClick = {
                             localError = when {
-                                currentPassword.isBlank() -> "Enter your current password"
-                                newPassword.length < 6 -> "New password must be at least 6 characters"
-                                newPassword != confirmPassword -> "Passwords do not match"
+                                currentPassword.isBlank() -> "Enter current password"
+                                newPassword.length < 6 -> "Password must be 6 characters"
+                                newPassword != confirmPassword -> "Passwords don't match"
                                 else -> null
                             }
+
                             if (localError == null) {
                                 onConfirm(currentPassword, newPassword)
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NavyBlue),
-                        enabled = !isLoading
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryBlue
+                        )
                     ) {
+
                         if (isLoading) {
-                            CircularProgressIndicator(color = Amber, strokeWidth = 2.dp)
+                            CircularProgressIndicator(
+                                color = PrimaryOrange,
+                                strokeWidth = 2.dp
+                            )
                         } else {
-                            Text("Confirm", color = Color.White)
+                            Text("Confirm")
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun PasswordField(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit
+) {
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password
+        ),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
 }

@@ -5,15 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-private val NavyBlue = Color(0xFF0D1B4B)
 
 @Composable
 fun MyUploadsSection(uploadCount: Int) {
@@ -24,22 +21,22 @@ fun MyUploadsSection(uploadCount: Int) {
     ) {
         Text(
             text = "My Uploads",
-            color = NavyBlue,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         if (uploadCount == 0) {
             Text(
                 text = "You haven't uploaded any papers yet.",
-                color = Color.Gray,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             Text(
                 text = "You have uploaded $uploadCount paper(s).",
-                color = Color.Gray,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

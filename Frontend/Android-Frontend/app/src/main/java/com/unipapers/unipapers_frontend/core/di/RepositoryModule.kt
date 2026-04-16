@@ -16,7 +16,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-
+import com.google.gson.Gson
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
@@ -43,8 +43,14 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideProfileRepository(
-        remoteDataSource: ProfileRemoteDataSource
+        remoteDataSource: ProfileRemoteDataSource,
+        @ApplicationContext context: Context,
+        gson: Gson
     ): ProfileRepository {
-        return ProfileRepositoryImpl(remoteDataSource)
+        return ProfileRepositoryImpl(
+            remoteDataSource,
+            context,
+            gson
+        )
     }
 }
