@@ -1,0 +1,86 @@
+{
+  "recentPapers": [
+    {
+      "id": "1",
+      "title": "Final Exam 2023/2024",
+      "courseUnit": "CSC 2100",
+      "type": "EXAM",
+      "academicYear": "2023/2024",
+      "uploadedBy": "John K.",
+      "timeAgo": "2 days ago",
+      "pageCount": 8
+    },
+    {
+      "id": "2",
+      "title": "CAT 1 2023/2024",
+      "courseUnit": "CSC 2200",
+      "type": "TEST_CAT",
+      "academicYear": "2023/2024",
+      "uploadedBy": "Mary A.",
+      "timeAgo": "5 days ago",
+      "pageCount": 4
+    },
+    {
+      "id": "3",
+      "title": "Final Exam 2022/2023",
+      "courseUnit": "CSC 3100",
+      "type": "EXAM",
+      "academicYear": "2022/2023",
+      "uploadedBy": "Peter M.",
+      "timeAgo": "1 week ago",
+      "pageCount": 10
+    },
+    {
+      "id": "4",
+      "title": "CAT 2 2023/2024",
+      "courseUnit": "CSC 2101",
+      "type": "TEST_CAT",
+      "academicYear": "2023/2024",
+      "uploadedBy": "Grace N.",
+      "timeAgo": "3 days ago",
+      "pageCount": 5
+    },
+    {
+      "id": "5",
+      "title": "Lecture Notes Sem 1",
+      "courseUnit": "CSC 1100",
+      "type": "LECTURE_NOTES",
+      "academicYear": "2023/2024",
+      "uploadedBy": "Brian O.",
+      "timeAgo": "1 day ago",
+      "pageCount": 20
+    }
+  ],
+  "courseUnits": [
+    { "code": "CSC 1100", "name": "Intro to CS", "paperCount": 5 },
+    { "code": "CSC 2100", "name": "Data Structures", "paperCount": 8 },
+    { "code": "CSC 2200", "name": "Computer Networks", "paperCount": 3 },
+    { "code": "CSC 3100", "name": "Operating Systems", "paperCount": 6 },
+    { "code": "CSC 2101", "name": "Algorithms", "paperCount": 4 },
+    { "code": "CSC 3200", "name": "Software Engineering", "paperCount": 2 },
+    { "code": "CSC 3201", "name": "Database Systems", "paperCount": 7 },
+    { "code": "CSC 4100", "name": "Machine Learning", "paperCount": 1 }
+  ],
+  "continueStudying": [
+    {
+      "id": "2",
+      "title": "CAT 1 2023/2024",
+      "courseUnit": "CSC 2200",
+      "type": "TEST_CAT",
+      "academicYear": "2023/2024",
+      "uploadedBy": "Mary A.",
+      "timeAgo": "5 days ago",
+      "pageCount": 4
+    },
+    {
+      "id": "3",
+      "title": "Final Exam 2022/2023",
+      "courseUnit": "CSC 3100",
+      "type": "EXAM",
+      "academicYear": "2022/2023",
+      "uploadedBy": "Peter M.",
+      "timeAgo": "1 week ago",
+      "pageCount": 10
+    }
+  ]
+}
