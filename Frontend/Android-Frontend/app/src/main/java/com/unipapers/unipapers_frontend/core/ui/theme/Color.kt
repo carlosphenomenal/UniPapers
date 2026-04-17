@@ -22,6 +22,7 @@ val NavUnselected = Color(0xFF94A3B8)
 val NavyBlue = Color(0xFF0D1B4B)
 val Amber = Color(0xFFF5A623)
 val NearWhite = Color(0xFFF8F9FA)
-val TealGreen = Color(0xFF00897B)
 val MediumGray = Color(0xFF9E9E9E)
 val LightGray = Color(0xFFE0E0E0)
+
+val SimpleBlue = Color(0xFF1A5B8E)
