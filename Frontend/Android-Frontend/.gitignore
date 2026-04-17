@@ -6,7 +6,7 @@ gradlew
 gradlew.bat
 
 # Local configuration
-local.properties
+# local.properties
 
 # Built application files
 *.apk
