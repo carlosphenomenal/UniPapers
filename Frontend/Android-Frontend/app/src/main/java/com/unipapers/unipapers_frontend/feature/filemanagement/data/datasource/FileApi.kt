@@ -18,7 +18,7 @@ interface FileApi {
     @PUT("files/confirm-upload/{pastPaperPublicId}")
     suspend fun confirmUpload(@Path("pastPaperPublicId") pastPaperPublicId: String): Response<Unit>
 
-    @GET("/presign-download/{pastPaperPublicId}")
+    @GET("files/presign-download/{pastPaperPublicId}")
     suspend fun getPresignedDownloadUrl(@Path("pastPaperPublicId") pastPaperPublicId: String): Response<FileDownloadResponseDto>
 
 }

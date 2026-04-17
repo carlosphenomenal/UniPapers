@@ -40,12 +40,13 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 @Composable
 fun PaperCard(
     paper: Paper,
+    onPaperClick: (String) -> Unit,
     modifier: Modifier = Modifier.width(180.dp)
 ) {
     Card(
         modifier = modifier
             .height(150.dp)
-            .clickable { },
+            .clickable { onPaperClick(paper.id) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -133,7 +134,7 @@ fun PaperCard(
 fun PaperCardPreview() {
     UniPapersTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            PaperCard(paper = dummyPapers[0])
+            PaperCard(paper = dummyPapers[0], onPaperClick = {})
         }
     }
 }

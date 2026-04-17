@@ -9,13 +9,16 @@ import androidx.compose.ui.unit.dp
 import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 
 @Composable
-fun RecentPapersRow(papers: List<Paper>) {
+fun RecentPapersRow(
+    papers: List<Paper>,
+    onPaperClick: (String) -> Unit
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(papers) { paper ->
-            PaperCard(paper = paper)
+            PaperCard(paper = paper, onPaperClick = onPaperClick)
         }
     }
 }

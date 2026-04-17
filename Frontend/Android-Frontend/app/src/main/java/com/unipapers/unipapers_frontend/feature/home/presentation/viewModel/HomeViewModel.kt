@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetPastPapersUseCase
+import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetSignedUrlUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getPastPapersUseCase: GetPastPapersUseCase
+    private val getPastPapersUseCase: GetPastPapersUseCase,
+    private val getSignedUrlUseCase: GetSignedUrlUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -53,5 +55,27 @@ class HomeViewModel @Inject constructor(
     fun onFilterSelected(filter: PaperType?) {
         _state.update { it.copy(selectedFilter = filter) }
         loadPastPapers()
+    }
+
+    fun onPaperClicked(paperId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isOpeningPdf = true, errorMessage = null) }
+            val result = getSignedUrlUseCase(paperId)
+            result.onSuccess { url ->
+                _state.update { it.copy(
+                    isOpeningPdf = false,
+                    signedUrl = url
+                ) }
+            }.onFailure { error ->
+                _state.update { it.copy(
+                    isOpeningPdf = false,
+                    errorMessage = error.message ?: "Failed to get signed URL"
+                ) }
+            }
+        }
+    }
+
+    fun resetSignedUrl() {
+        _state.update { it.copy(signedUrl = null) }
     }
 }

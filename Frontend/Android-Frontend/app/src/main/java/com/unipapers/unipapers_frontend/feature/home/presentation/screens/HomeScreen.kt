@@ -2,6 +2,7 @@ package com.unipapers.unipapers_frontend.feature.home.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,106 +45,136 @@ import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
+import com.unipapers.unipapers_frontend.feature.home.presentation.components.PapersGrid
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeState
 import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeViewModel
+import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    
-    HomeScreenContent(
-        state = state,
-        onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
-        onFilterSelected = { viewModel.onFilterSelected(it) }
-    )
+
+    if (state.signedUrl != null) {
+        PdfViewerScreen(
+            url = state.signedUrl!!,
+            onBackClick = { viewModel.resetSignedUrl() }
+        )
+    } else {
+        HomeScreenContent(
+            state = state,
+            onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
+            onFilterSelected = { viewModel.onFilterSelected(it) },
+            onPaperClick = { viewModel.onPaperClicked(it) }
+        )
+    }
 }
 
 @Composable
 fun HomeScreenContent(
     state: HomeState,
     onSearchQueryChanged: (String) -> Unit,
-    onFilterSelected: (PaperType?) -> Unit
+    onFilterSelected: (PaperType?) -> Unit,
+    onPaperClick: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(NearWhite)
-            .verticalScroll(scrollState)
-            .padding(bottom = 32.dp)
-    ) {
-        // Top header
-        HomeHeader()
-
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .offset(y = (-8).dp)
+                .fillMaxSize()
+                .background(NearWhite)
+                .verticalScroll(scrollState)
+                .padding(bottom = 32.dp)
         ) {
-            // Search bar
-            HomeSearchBar(
-                query = state.searchQuery,
-                onQueryChange = onSearchQueryChanged
-            )
+            // Top header
+            HomeHeader()
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .offset(y = (-8).dp)
+            ) {
+                // Search bar
+                HomeSearchBar(
+                    query = state.searchQuery,
+                    onQueryChange = onSearchQueryChanged
+                )
 
-            // Filter chips
-            FilterChipsRow(
-                selectedFilter = state.selectedFilter,
-                onFilterSelected = onFilterSelected
-            )
+                Spacer(modifier = Modifier.height(24.dp))
 
+                // Filter chips
+                FilterChipsRow(
+                    selectedFilter = state.selectedFilter,
+                    onFilterSelected = onFilterSelected
+                )
 
+                if (state.recentPapers.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HomeSectionHeading(title = "Recent Papers")
+                }
+            }
 
             if (state.recentPapers.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                HomeSectionHeading(title = "Recent Papers")
-            }
-        }
+                Spacer(modifier = Modifier.height(8.dp))
 
-        if (state.recentPapers.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Horizontal scrolling paper cards
-            RecentPapersRow(papers = state.recentPapers)
-        }
-        
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            HomeSectionHeading(title = "Recommended for you")
-
-            if (state.isLoading) {
-                Spacer(modifier = Modifier.height(24.dp))
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = SimpleBlue
+                // Horizontal scrolling paper cards
+                RecentPapersRow(
+                    papers = state.recentPapers,
+                    onPaperClick = onPaperClick
                 )
             }
 
-            state.errorMessage?.let { error ->
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = error,
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+
+                HomeSectionHeading(title = "Recommended for you")
+
+                if (state.isLoading) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = SimpleBlue
+                    )
+                }
+
+                state.errorMessage?.let { error ->
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = error,
+                            color = Color.Red
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Course unit grid
+                PapersGrid(
+                    papers = state.papers,
+                    onPaperClick = onPaperClick
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Course unit grid
-            CourseUnitGrid(papers = state.papers)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
+        if (state.isOpeningPdf) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = Color.Black.copy(alpha = 0.3f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
         }
     }
 }
@@ -273,6 +304,7 @@ fun HomeScreenPreview() {
             papers = listOf(samplePaper1, samplePaper2, samplePaper3)
         ),
         onSearchQueryChanged = {},
-        onFilterSelected = {}
+        onFilterSelected = {},
+        onPaperClick = {}
     )
 }

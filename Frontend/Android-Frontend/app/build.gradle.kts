@@ -111,6 +111,9 @@ dependencies {
     //lottie
     implementation("com.airbnb.android:lottie-compose:6.4.0")
 
+    // PDF Viewer
+    implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.1")
+
     // Room
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

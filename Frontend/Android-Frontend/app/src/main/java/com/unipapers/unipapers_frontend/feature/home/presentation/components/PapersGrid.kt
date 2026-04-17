@@ -7,7 +7,10 @@ import androidx.compose.ui.unit.dp
 import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 
 @Composable
-fun CourseUnitGrid(papers: List<Paper>) {
+fun PapersGrid(
+    papers: List<Paper>,
+    onPaperClick: (String) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -20,6 +23,7 @@ fun CourseUnitGrid(papers: List<Paper>) {
                 rowPapers.forEach { paper ->
                     PaperCard(
                         paper = paper,
+                        onPaperClick = onPaperClick,
                         modifier = Modifier.weight(1f)
                     )
                 }
