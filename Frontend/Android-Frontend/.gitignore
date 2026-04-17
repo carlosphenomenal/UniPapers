@@ -51,3 +51,5 @@ Thumbs.db
 
 # Log files
 *.log
+
+local.properties

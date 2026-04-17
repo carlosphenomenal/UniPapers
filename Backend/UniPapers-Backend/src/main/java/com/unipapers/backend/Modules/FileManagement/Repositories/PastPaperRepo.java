@@ -8,12 +8,28 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PastPaperRepo extends JpaRepository<PastPaper, Long> {
 
     Optional<PastPaper> findByPublicId(String publicId);
+
+    @Query(value = "SELECT p.* FROM past_papers p " +
+            "JOIN courses c ON c.id = p.course_id " +
+            "WHERE (:query IS NULL OR " +
+            "LOWER(c.course_code) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(c.course_name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(p.key) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(p.academic_year) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "AND (:type IS NULL OR p.type = :type) " +
+            "ORDER BY p.added_at DESC",
+            nativeQuery = true)
+    List<PastPaper> searchPastPapers(
+            @Param("query") String query,
+            @Param("type") String type
+    );
 
     @Modifying
     @Query("UPDATE PastPaper p SET p.uploadStatus = 'UPLOADED' WHERE p.publicId = :publicId")

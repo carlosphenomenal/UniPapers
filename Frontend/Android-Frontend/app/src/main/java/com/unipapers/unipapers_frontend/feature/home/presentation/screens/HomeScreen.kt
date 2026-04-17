@@ -100,6 +100,26 @@ fun HomeScreenContent(
                 onFilterSelected = onFilterSelected
             )
 
+
+
+            if (state.recentPapers.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                HomeSectionHeading(title = "Recent Papers")
+            }
+        }
+
+        if (state.recentPapers.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Horizontal scrolling paper cards
+            RecentPapersRow(papers = state.recentPapers)
+        }
+        
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            HomeSectionHeading(title = "Recommended for you")
+
             if (state.isLoading) {
                 Spacer(modifier = Modifier.height(24.dp))
                 CircularProgressIndicator(
@@ -116,21 +136,6 @@ fun HomeScreenContent(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            HomeSectionHeading(title = "Recent Papers")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Horizontal scrolling paper cards
-        RecentPapersRow(papers = state.recentPapers)
-        
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            HomeSectionHeading(title = "Recommended for you")
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -186,7 +191,7 @@ fun HomeHeader() {
 
 @Composable
 fun HomeSearchBar(
-    query: String,
+    query: String?,
     onQueryChange: (String) -> Unit
 ) {
     Surface(
@@ -195,36 +200,38 @@ fun HomeSearchBar(
         color = Color.White,
         shadowElevation = 4.dp
     ) {
-        TextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(
-                    text = "Search by course, code, program...",
-                    color = MediumGray,
-                    fontSize = 14.sp,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MediumGray,
-                    modifier = Modifier.size(24.dp)
-                )
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = NavyBlue
-            ),
-            singleLine = true
-        )
+        if (query != null) {
+            TextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text(
+                        text = "Search by course, code, program...",
+                        color = MediumGray,
+                        fontSize = 14.sp,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MediumGray,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = NavyBlue
+                ),
+                singleLine = true
+            )
+        }
     }
 }
 
