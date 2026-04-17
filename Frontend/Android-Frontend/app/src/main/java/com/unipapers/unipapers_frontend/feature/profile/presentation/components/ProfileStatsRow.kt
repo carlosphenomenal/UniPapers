@@ -36,9 +36,7 @@ fun ProfileStatsRow(stats: UserStats) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
-            StatItem("Uploads", stats.documentsUploaded.toString())
-            StatItem("Downloads", stats.totalDownloads.toString())
-            StatItem("Free Views", stats.totalFreeViewPoints.toString())
+            StatItem("Uploads", stats.uploadedPastPapers.toString())
 
         }
     }

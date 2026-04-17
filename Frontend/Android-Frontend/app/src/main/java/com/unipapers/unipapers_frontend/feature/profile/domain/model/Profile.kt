@@ -12,19 +12,15 @@ data class ProfileResponse(
 data class UserInfo(
     val fullName: String,
     val email: String,
-    val profileImageUrl: String?,
     val institution: String,
     val studentId: String
 )
 
 data class UserStats(
-    val documentsUploaded: Int,
-    val totalDownloads: Int,
-    val totalFreeViewPoints: Int
+    val uploadedPastPapers: Int
 )
 
 data class SettingOption(
     val id: String,
     val label: String,
-    val icon: String
 )

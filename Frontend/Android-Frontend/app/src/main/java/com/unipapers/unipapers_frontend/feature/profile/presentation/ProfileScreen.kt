@@ -143,7 +143,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         ProfileStatsRow(stats = profile.stats)
                         Spacer(modifier = Modifier.height(16.dp))
-                        MyUploadsSection(uploadCount = profile.stats.documentsUploaded)
+                        MyUploadsSection(uploadCount = profile.stats.uploadedPastPapers)
                         Spacer(modifier = Modifier.height(16.dp))
                         SettingsSection(
                             onChangePassword = { viewModel.onShowChangePasswordModal() },
