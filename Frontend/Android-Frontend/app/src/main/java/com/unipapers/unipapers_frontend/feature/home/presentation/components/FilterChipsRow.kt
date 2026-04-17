@@ -43,7 +43,9 @@ fun FilterChipsRow(
         // Assessment types
         listOf(
             "EXAMS" to PaperType.EXAM,
-            "TESTS" to PaperType.TEST_CAT
+            "TESTS" to PaperType.TEST,
+            "NOTES" to PaperType.NOTES,
+            "ASSIGNMENTS" to PaperType.ASSIGNMENT
         ).forEach { (label, type) ->
             FilterChipItem(
                 label = label,

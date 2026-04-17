@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
-import com.unipapers.unipapers_frontend.feature.home.data.dummyPapers
+import com.unipapers.unipapers_frontend.feature.home.domain.dummyPapers
 import com.unipapers.unipapers_frontend.feature.home.domain.Paper
 
 @Composable
@@ -88,14 +88,14 @@ fun PaperCard(
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = paper.courseUnit,
+                        text = paper.courseCode,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = paper.title,
+                        text = paper.courseName,
                         fontSize = 13.sp,
                         color = Color.Gray,
                         maxLines = 1,

@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.home.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +11,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -36,17 +40,11 @@ import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
-import com.unipapers.unipapers_frontend.feature.home.domain.CourseUnit
 import com.unipapers.unipapers_frontend.feature.home.domain.Paper
 import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.IconButton
 
 @Composable
 fun HomeScreen(
@@ -106,7 +104,7 @@ fun HomeScreenContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Horizontal scrolling paper cards
-        RecentPapersRow(papers = state.filteredPapers)
+        RecentPapersRow(papers = state.recentPapers)
         
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -232,25 +230,17 @@ fun HomeSectionHeading(title: String) {
 fun HomeScreenPreview() {
     val samplePaper1 = Paper(
         id = "1",
-        title = "Introduction to Computer Science",
-        courseUnit = "CS101",
+        courseName = "Computer Architecture",
+        courseCode = "CSC 1100",
         type = PaperType.EXAM,
-        academicYear = "2023/2024",
-        uploadedBy = "Admin",
-        timeAgo = "2 days ago",
-        pageCount = 12
+        academicYear = "2023/2024"
     )
     val samplePaper2 = samplePaper1.copy(id = "2")
     val samplePaper3 = samplePaper1.copy(id = "3")
 
     HomeScreenContent(
         state = HomeState(
-            userName = "Victory",
-            filteredPapers = listOf(samplePaper1, samplePaper2),
-            courseUnits = listOf(
-                CourseUnit("CS101", "Computer Science", 15),
-                CourseUnit("MA102", "Mathematics", 8)
-            ),
+            recentPapers = listOf(samplePaper1, samplePaper2),
 
             papers = listOf(samplePaper1, samplePaper2, samplePaper3)
         ),

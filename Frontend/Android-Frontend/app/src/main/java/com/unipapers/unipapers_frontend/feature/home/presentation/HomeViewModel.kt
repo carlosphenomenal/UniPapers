@@ -5,8 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.unipapers.unipapers_frontend.feature.home.domain.ContinueStudyingItem
-import com.unipapers.unipapers_frontend.feature.home.domain.CourseUnit
 import com.unipapers.unipapers_frontend.feature.home.domain.Paper
 import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,25 +18,15 @@ import kotlinx.coroutines.launch
 
 data class PaperJson(
     val id: String,
-    val title: String,
-    val courseUnit: String,
-    val type: String,
     val academicYear: String,
-    val uploadedBy: String,
-    val timeAgo: String,
+    val courseName: String,
+    val courseCode: String,
+    val type: String,
     val pageCount: Int
 )
 
-data class CourseUnitJson(
-    val code: String,
-    val name: String,
-    val paperCount: Int
-)
-
 data class HomeDataJson(
-    @SerializedName("recentPapers") val recentPapers: List<PaperJson>,
-    @SerializedName("courseUnits") val courseUnits: List<CourseUnitJson>,
-    @SerializedName("continueStudying") val continueStudying: List<PaperJson>
+    @SerializedName("recentPapers") val recentPapers: List<PaperJson>
 )
 
 // ─────────────────────────────────────────────
@@ -68,25 +56,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val homeData = Gson().fromJson(jsonString, HomeDataJson::class.java)
 
                 // Step 3: Map JSON objects to domain models
-                val papers = homeData.recentPapers.map { it.toPaper() }
-                val courseUnits = homeData.courseUnits.map {
-                    CourseUnit(it.code, it.name, it.paperCount)
-                }
-                val continueStudying = homeData.continueStudying.map {
-                    ContinueStudyingItem(
-                        paper = it.toPaper(),
-                        progressPercent = 45
-                    )
-                }
+                val recentPapers = homeData.recentPapers.map { it.toPaper() }
 
                 // Step 4: Update the state
                 _state.update { currentState ->
                     currentState.copy(
-                        papers = papers,
-                        filteredPapers = papers,
-                        courseUnits = courseUnits,
-                        continueStudying = continueStudying,
-                        userName = "Victory"
+                        recentPapers = recentPapers,
+                        papers = recentPapers // Just for demonstration
                     )
                 }
 
@@ -102,13 +78,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 currentState.papers
             } else {
                 currentState.papers.filter {
-                    it.title.contains(query, ignoreCase = true) ||
-                            it.courseUnit.contains(query, ignoreCase = true)
+                    it.courseName.contains(query, ignoreCase = true) ||
+                            it.courseName.contains(query, ignoreCase = true)
                 }
             }
             currentState.copy(
                 searchQuery = query,
-                filteredPapers = filtered
+                papers = filtered
             )
         }
     }
@@ -122,7 +98,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
             currentState.copy(
                 selectedFilter = filter,
-                filteredPapers = filtered
+                papers = filtered
             )
         }
     }
@@ -135,16 +111,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 fun PaperJson.toPaper(): Paper {
     return Paper(
         id = this.id,
-        title = this.title,
-        courseUnit = this.courseUnit,
+        courseName = this.courseName,
+        courseCode = this.courseCode,
         type = when (this.type) {
             "EXAM" -> PaperType.EXAM
-            "TEST_CAT" -> PaperType.TEST_CAT
-            else -> PaperType.LECTURE_NOTES
+            "TEST" -> PaperType.TEST
+            "ASSIGNMENT" -> PaperType.ASSIGNMENT
+            else -> PaperType.NOTES
         },
-        academicYear = this.academicYear,
-        uploadedBy = this.uploadedBy,
-        timeAgo = this.timeAgo,
-        pageCount = this.pageCount
+        academicYear = this.academicYear
     )
 }
