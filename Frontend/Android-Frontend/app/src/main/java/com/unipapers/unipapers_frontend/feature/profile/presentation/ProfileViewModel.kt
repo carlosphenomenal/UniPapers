@@ -1,21 +1,28 @@
 package com.unipapers.unipapers_frontend.feature.profile.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.unipapers.unipapers_frontend.core.domain.model.User
+import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.GetProfileUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdateNotificationPrefsUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdatePasswordUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val gson: Gson,
     private val getProfileUseCase: GetProfileUseCase,
     private val updatePasswordUseCase: UpdatePasswordUseCase,
     private val updateNotificationPrefsUseCase: UpdateNotificationPrefsUseCase
@@ -29,40 +36,26 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun loadMockProfile() {
-        _state.update {
-            it.copy(
-                isLoading = false,
-                user = User(
-                    id = "1",
-                    fullName = "Gloria Nabukalu",
-                    email = "ria.kalu@students.mak.ac.ug",
-                    studentNumber = "22/U/1234",
-                    programme = "BSc Software Engineering",
-                    yearOfStudy = 2,
-                    currentSemester = 2,
-                    freeViewsRemaining = 2,
-                    hasUnlockedAccess = false,
-                    uploadCount = 0,
-                    downloadCount = 1
-                )
-            )
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val profileData = withContext(Dispatchers.IO) {
+                    val jsonString = context.assets.open("profile_mock.json")
+                        .bufferedReader()
+                        .use { it.readText() }
+                    gson.fromJson(jsonString, ProfileResponse::class.java)
+                }
+                _state.update {
+                    it.copy(isLoading = false, profile = profileData, error = null)
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(isLoading = false, error = "Failed to load profile data source")
+                }
+            }
         }
-        loadProfile()
     }
 
-    fun loadProfile() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
-            getProfileUseCase().fold(
-                onSuccess = { user ->
-                    _state.update { it.copy(isLoading = false, user = user) }
-                },
-                onFailure = { e ->
-                    _state.update { it.copy(isLoading = false, error = e.message) }
-                }
-            )
-        }
-    }
 
     fun onShowChangePasswordModal() {
         _state.update { it.copy(showChangePasswordModal = true) }
@@ -116,7 +109,7 @@ class ProfileViewModel @Inject constructor(
                         )
                     }
                     loadMockProfile()
-                    loadProfile()
+
                 },
                 onFailure = { e ->
                     _state.update {
@@ -139,6 +132,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onLogout(onLoggedOut: () -> Unit) {
+        // Clear session logic would go here
         onLoggedOut()
     }
 

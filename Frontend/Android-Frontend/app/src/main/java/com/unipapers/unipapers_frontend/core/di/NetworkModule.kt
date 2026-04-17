@@ -1,5 +1,6 @@
 package com.unipapers.unipapers_frontend.core.di
 
+import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
@@ -20,6 +21,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
     fun provideAuthInterceptor(): AuthInterceptor = AuthInterceptor()
 
     @Provides
@@ -32,11 +37,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -57,6 +62,4 @@ object NetworkModule {
     fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
         return retrofit.create(ProfileApiService::class.java)
     }
-
-
 }
