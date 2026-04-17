@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.ContinueStudyingSection
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
@@ -85,12 +84,12 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            HomeSectionHeading(title = "Continue Studying")
+            //HomeSectionHeading(title = "Continue Studying")
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Continue studying cards
-            ContinueStudyingSection(items = state.continueStudying)
+            //ContinueStudyingSection(items = state.continueStudying)
 
             Spacer(modifier = Modifier.height(16.dp))
         }

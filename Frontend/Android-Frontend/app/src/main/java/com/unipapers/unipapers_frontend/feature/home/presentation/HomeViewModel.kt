@@ -137,9 +137,9 @@ fun PaperJson.toPaper(): Paper {
         id = this.id,
         title = this.title,
         courseUnit = this.courseUnit,
-        type = when (this.type) {
+        type = when (this.type.trim().uppercase()) {
             "EXAM" -> PaperType.EXAM
-            "TEST_CAT" -> PaperType.TEST_CAT
+            "TEST" -> PaperType.TEST_CAT
             else -> PaperType.LECTURE_NOTES
         },
         academicYear = this.academicYear,
