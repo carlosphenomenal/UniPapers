@@ -36,14 +36,17 @@ import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
-import com.unipapers.unipapers_frontend.feature.home.domain.ContinueStudyingItem
 import com.unipapers.unipapers_frontend.feature.home.domain.CourseUnit
 import com.unipapers.unipapers_frontend.feature.home.domain.Paper
 import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
-import com.unipapers.unipapers_frontend.feature.home.presentation.components.ContinueStudyingSection
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.IconButton
 
 @Composable
 fun HomeScreen(
@@ -117,12 +120,6 @@ fun HomeScreenContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            HomeSectionHeading(title = "Continue Studying")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Continue studying cards
-            ContinueStudyingSection(items = state.continueStudying)
         }
     }
 }
@@ -133,19 +130,33 @@ fun HomeScreenContent(
 
 @Composable
 fun HomeHeader() {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 20.dp)
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "UniPapers",
-                color = SimpleBlue,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "UniPapers",
+            color = SimpleBlue,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+        BadgedBox(
+            badge = {
+                Badge(containerColor = NavyBlue) {
+                    Text("2", fontSize = 10.sp, color = Color.White)
+                }
+            }
+        ) {
+            IconButton(onClick = {}) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = NavyBlue
+                )
+            }
         }
     }
 }
@@ -240,9 +251,7 @@ fun HomeScreenPreview() {
                 CourseUnit("CS101", "Computer Science", 15),
                 CourseUnit("MA102", "Mathematics", 8)
             ),
-            continueStudying = listOf(
-                ContinueStudyingItem(samplePaper1, 45)
-            ),
+
             papers = listOf(samplePaper1, samplePaper2, samplePaper3)
         ),
         onSearchQueryChanged = {},
