@@ -1,0 +1,16 @@
+package com.unipapers.backend.Modules.Course.Dtos;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CourseResponseDto {
+    private String publicId;
+    private String courseCode;
+    private String courseName;
+}

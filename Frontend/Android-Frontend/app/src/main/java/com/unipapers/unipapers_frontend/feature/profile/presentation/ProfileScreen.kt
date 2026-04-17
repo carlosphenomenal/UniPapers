@@ -47,6 +47,16 @@ import com.unipapers.unipapers_frontend.feature.profile.presentation.components.
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.MyUploadsSection
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ProfileStatsRow
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.SettingsSection
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.foundation.layout.Row
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

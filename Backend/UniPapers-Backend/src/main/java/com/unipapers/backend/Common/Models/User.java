@@ -1,0 +1,89 @@
+package com.unipapers.backend.Common.Models;
+
+import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Common.Enums.Role;
+import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
+import com.unipapers.backend.Modules.FileManagement.Models.Program;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String publicId;
+
+    private String firstName;
+
+    private String lastName;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false, unique = true)
+    private Long studentNumber;
+
+    private String password;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "program_id")
+    private Program program;
+
+    private Integer yearOfStudy;
+
+    private Integer semester;
+
+    private List<Role> roles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<PastPaper> pastPapers;
+
+    private Instant addedAt;
+    private Instant updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        // Generate a public ID if not provided
+        if (publicId == null) {
+            publicId = UlidCreator.getUlid().toString();
+        }
+        // Validate semester
+        if (semester != 1 && semester != 2) {
+            throw new IllegalArgumentException("Semester must be 1 or 2");
+        }
+        // Validate year of study
+        if (yearOfStudy < 1 || yearOfStudy > 5) {
+            throw new IllegalArgumentException("Year of study must be between 1 and 5");
+        }
+        // Set the addedAt and updatedAt timestamps
+        addedAt = Instant.now();
+        updatedAt = Instant.now();
+
+        // Set the default role to USER if not provided
+        if(roles.isEmpty()){
+            roles.add(Role.USER);
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
+    }
+
+}
