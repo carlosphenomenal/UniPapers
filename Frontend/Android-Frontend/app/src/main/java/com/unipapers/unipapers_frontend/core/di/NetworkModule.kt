@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.core.di
 
 import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
@@ -61,5 +62,11 @@ object NetworkModule {
     @Singleton
     fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
         return retrofit.create(ProfileApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUniPapersApiService(retrofit: Retrofit): UniPapersApiService {
+        return retrofit.create(UniPapersApiService::class.java)
     }
 }

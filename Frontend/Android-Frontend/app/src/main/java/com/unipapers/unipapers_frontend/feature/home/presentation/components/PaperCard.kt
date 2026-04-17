@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
-import com.unipapers.unipapers_frontend.feature.home.domain.dummyPapers
-import com.unipapers.unipapers_frontend.feature.home.domain.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.model.dummyPapers
+import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 
 @Composable
 fun PaperCard(

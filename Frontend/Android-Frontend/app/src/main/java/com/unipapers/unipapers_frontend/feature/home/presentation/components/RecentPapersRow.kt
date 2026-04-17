@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import com.unipapers.unipapers_frontend.feature.home.domain.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 
 @Composable
 fun RecentPapersRow(papers: List<Paper>) {

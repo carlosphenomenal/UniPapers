@@ -1,7 +1,7 @@
-package com.unipapers.unipapers_frontend.feature.home.presentation
+package com.unipapers.unipapers_frontend.feature.home.presentation.viewModel
 
-import com.unipapers.unipapers_frontend.feature.home.domain.Paper
-import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
+import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 
 data class HomeState(
     val isLoading: Boolean = false,

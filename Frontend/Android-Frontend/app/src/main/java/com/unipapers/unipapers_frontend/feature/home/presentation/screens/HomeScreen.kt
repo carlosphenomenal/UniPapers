@@ -1,4 +1,4 @@
-package com.unipapers.unipapers_frontend.feature.home.presentation
+package com.unipapers.unipapers_frontend.feature.home.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -34,21 +36,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
-import com.unipapers.unipapers_frontend.feature.home.domain.Paper
-import com.unipapers.unipapers_frontend.feature.home.domain.PaperType
+import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.CourseUnitGrid
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.FilterChipsRow
 import com.unipapers.unipapers_frontend.feature.home.presentation.components.RecentPapersRow
+import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeState
+import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     
@@ -95,6 +99,23 @@ fun HomeScreenContent(
                 selectedFilter = state.selectedFilter,
                 onFilterSelected = onFilterSelected
             )
+
+            if (state.isLoading) {
+                Spacer(modifier = Modifier.height(24.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    color = SimpleBlue
+                )
+            }
+
+            state.errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = error,
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -170,7 +191,7 @@ fun HomeSearchBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = androidx.compose.foundation.shape.CircleShape,
+        shape = CircleShape,
         color = Color.White,
         shadowElevation = 4.dp
     ) {

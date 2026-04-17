@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.unipapers.unipapers_frontend.feature.home.domain.Paper
+import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 
 @Composable
 fun CourseUnitGrid(papers: List<Paper>) {

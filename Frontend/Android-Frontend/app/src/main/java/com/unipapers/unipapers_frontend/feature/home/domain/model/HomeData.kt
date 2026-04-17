@@ -1,4 +1,4 @@
-package com.unipapers.unipapers_frontend.feature.home.domain
+package com.unipapers.unipapers_frontend.feature.home.domain.model
 
 val dummyPapers = listOf(
     Paper(
