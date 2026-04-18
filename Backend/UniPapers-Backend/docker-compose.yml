@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: unipapers-db
+    environment:
+      POSTGRES_DB: unipapers
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unipapers"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - unipapers
+
+  app:
+    build: .
+    container_name: unipapers-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/unipapers
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      # Optional: Cloudflare R2 credentials can also be set here if not in application.yaml
+      # - CLOUDFLARE_R2_ACCOUNT_ID=...
+      # - CLOUDFLARE_R2_ACCESS_KEY=...
+      # - CLOUDFLARE_R2_SECRET_KEY=...
+      # - CLOUDFLARE_R2_BUCKET_NAME=...
+      # - CLOUDFLARE_R2_PUBLIC_URL=...
+    ports:
+      - "8080:8080"
+    networks:
+      - unipapers
+
+  nginx:
+    image: nginx:alpine
+    container_name: unipapers-nginx
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    networks:
+      - unipapers
+
+volumes:
+  postgres_data:
+
+networks:
+  unipapers:
+    name: unipapers
+
