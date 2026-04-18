@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">UniPapers</string>
+    <string name="downloads_title">Downloads</string>
+    <string name="files_count">%1$d files</string>
+    <string name="active_section">ACTIVE</string>
+    <string name="failed_section">FAILED</string>
+    <string name="completed_section">COMPLETED</string>
+    <string name="downloading">Downloading…</string>
+    <string name="paused">Paused</string>
+    <string name="failed">Failed</string>
+    <string name="content_desc_back">Back</string>
+    <string name="content_desc_pause">Pause</string>
+    <string name="content_desc_resume">Resume</string>
+    <string name="content_desc_delete">Delete</string>
+    <string name="content_desc_retry">Retry</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
 import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
@@ -32,7 +33,9 @@ fun NavGraph(
             PlaceholderScreen("Browse Screen")
         }
         composable(Screen.Downloads.route) {
-            PlaceholderScreen("Downloads Screen")
+            DownloadScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
         composable(Screen.Profile.route) {
             ProfileScreen(
