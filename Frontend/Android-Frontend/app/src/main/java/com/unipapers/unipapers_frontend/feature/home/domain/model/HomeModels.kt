@@ -8,9 +8,17 @@ data class Paper(
     val type: PaperType
 )
 
-enum class PaperType(val displayName: String) {
-    EXAM("Exam"),
-    TEST("Test"),
-    ASSIGNMENT("Assignment"),
-    NOTES("Notes")
+enum class PaperType {
+    EXAM,
+    TEST,
+    ASSIGNMENT,
+    NOTES;
+
+    val pluralName: String
+        get() = when (this) {
+            EXAM -> "exams"
+            TEST -> "tests"
+            ASSIGNMENT -> "assignments"
+            NOTES -> "notes"
+        }
 }

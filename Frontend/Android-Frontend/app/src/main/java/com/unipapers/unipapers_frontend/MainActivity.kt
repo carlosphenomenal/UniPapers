@@ -13,10 +13,13 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.unipapers.unipapers_frontend.core.navigation.NavGraph
@@ -25,7 +28,7 @@ import com.unipapers.unipapers_frontend.core.ui.components.BottomNavBar
 import com.unipapers.unipapers_frontend.core.ui.components.ToastData
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
 import com.unipapers.unipapers_frontend.core.ui.components.UniPapersToast
-import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryOrange
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -75,7 +78,7 @@ class MainActivity : ComponentActivity() {
                             if (currentRoute == Screen.Home.route) {
                                 FloatingActionButton(
                                     onClick = { navController.navigate(Screen.Upload.route) },
-                                    containerColor = PrimaryOrange,
+                                    containerColor = SimpleBlue,
                                     contentColor = Color.White
                                 ) {
                                     Icon(

@@ -33,12 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.unipapers.unipapers_frontend.core.ui.components.ErrorComponent
 import com.unipapers.unipapers_frontend.core.ui.theme.MediumGray
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.NearWhite
@@ -68,7 +70,8 @@ fun HomeScreen(
             state = state,
             onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
             onFilterSelected = { viewModel.onFilterSelected(it) },
-            onPaperClick = { viewModel.onPaperClicked(it) }
+            onPaperClick = { viewModel.onPaperClicked(it) },
+            onRetry = { viewModel.retry() }
         )
     }
 }
@@ -78,7 +81,8 @@ fun HomeScreenContent(
     state: HomeState,
     onSearchQueryChanged: (String) -> Unit,
     onFilterSelected: (PaperType?) -> Unit,
-    onPaperClick: (String) -> Unit
+    onPaperClick: (String) -> Unit,
+    onRetry: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -131,39 +135,50 @@ fun HomeScreenContent(
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                HomeSectionHeading(title = "Recommended for you")
-
-                if (state.isLoading) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = SimpleBlue
-                    )
-                }
-
-                state.errorMessage?.let { error ->
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                if (!state.isLoading) {
+                    if (state.errorMessage != null) {
+                        ErrorComponent(
+                            message = state.errorMessage,
+                            onRetry = onRetry
+                        )
+                    } else if (state.papers.isEmpty()) {
+                        val emptyMessage = if (state.selectedFilter != null) {
+                            "No ${state.selectedFilter.pluralName} available currently"
+                        } else {
+                            "No available past papers currently"
+                        }
+                        
                         Text(
-                            text = error,
-                            color = Color.Red
+                            text = emptyMessage,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            textAlign = TextAlign.Center,
+                            color = MediumGray,
+                            fontSize = 16.sp
+                        )
+                    } else {
+                        HomeSectionHeading(title = "Recommended for you")
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Course unit grid
+                        PapersGrid(
+                            papers = state.papers,
+                            onPaperClick = onPaperClick
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Course unit grid
-                PapersGrid(
-                    papers = state.papers,
-                    onPaperClick = onPaperClick
-                )
-
                 Spacer(modifier = Modifier.height(32.dp))
             }
+        }
+
+        if (state.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = SimpleBlue
+            )
         }
 
         if (state.isOpeningPdf) {
@@ -200,7 +215,7 @@ fun HomeHeader() {
         )
         BadgedBox(
             badge = {
-                Badge(containerColor = NavyBlue) {
+                Badge(containerColor = SimpleBlue) {
                     Text("2", fontSize = 10.sp, color = Color.White)
                 }
             }
@@ -209,7 +224,7 @@ fun HomeHeader() {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
-                    tint = NavyBlue
+                    tint = SimpleBlue
                 )
             }
         }
@@ -222,7 +237,7 @@ fun HomeHeader() {
 
 @Composable
 fun HomeSearchBar(
-    query: String?,
+    query: String,
     onQueryChange: (String) -> Unit
 ) {
     Surface(
@@ -231,38 +246,36 @@ fun HomeSearchBar(
         color = Color.White,
         shadowElevation = 4.dp
     ) {
-        if (query != null) {
-            TextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        text = "Search by course, code, program...",
-                        color = MediumGray,
-                        fontSize = 14.sp,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MediumGray,
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = NavyBlue
-                ),
-                singleLine = true
-            )
-        }
+        TextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text(
+                    text = "Search by course, code, program...",
+                    color = MediumGray,
+                    fontSize = 14.sp,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = MediumGray,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = NavyBlue
+            ),
+            singleLine = true
+        )
     }
 }
 
@@ -305,6 +318,7 @@ fun HomeScreenPreview() {
         ),
         onSearchQueryChanged = {},
         onFilterSelected = {},
-        onPaperClick = {}
+        onPaperClick = {},
+        onRetry = {}
     )
 }

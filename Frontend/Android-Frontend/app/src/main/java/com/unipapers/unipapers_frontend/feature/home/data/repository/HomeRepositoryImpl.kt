@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.home.data.repository
 
-import android.util.Log
+import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.core.data.remote.util.ErrorParser
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
 import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
 import com.unipapers.unipapers_frontend.feature.home.data.model.toPaper
@@ -11,12 +12,18 @@ import javax.inject.Inject
 
 class HomeRepositoryImpl @Inject constructor(
     private val apiService: UniPapersApiService,
-    private val fileApi: FileApi
+    private val fileApi: FileApi,
+    private val gson: Gson
 ) : HomeRepository {
     override suspend fun getPastPapers(query: String?, filter: PaperType?): Result<List<Paper>> {
         return try {
             val response = apiService.getPastPapers(query, filter?.name)
-            Result.success(response.map { it.toPaper() })
+            if (response.isSuccessful) {
+                Result.success(response.body()?.map { it.toPaper() } ?: emptyList())
+            } else {
+                val errorMessage = ErrorParser.parseErrorMessage(response, gson)
+                Result.failure(Exception(errorMessage))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -26,7 +33,8 @@ class HomeRepositoryImpl @Inject constructor(
         return try {
             val response = fileApi.getPresignedDownloadUrl(paperId)
             if (!response.isSuccessful) {
-                return Result.failure(Exception("Failed to get presigned download URL: ${response.message()}"))
+                val errorMessage = ErrorParser.parseErrorMessage(response, gson)
+                return Result.failure(Exception(errorMessage))
             }
 
             val signedUrl = response.body()?.signedUrl

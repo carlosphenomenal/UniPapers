@@ -1,6 +1,10 @@
 package com.unipapers.unipapers_frontend.core.ui.components
 
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
@@ -11,7 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.unipapers.unipapers_frontend.core.navigation.bottomNavItems
 import com.unipapers.unipapers_frontend.core.ui.theme.NavUnselected
-import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryOrange
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 
 @Composable
 fun BottomNavBar(navController: NavController) {
@@ -48,8 +52,8 @@ fun BottomNavBar(navController: NavController) {
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PrimaryOrange,
-                    selectedTextColor = PrimaryOrange,
+                    selectedIconColor = SimpleBlue,
+                    selectedTextColor = SimpleBlue,
                     unselectedIconColor = NavUnselected,
                     unselectedTextColor = NavUnselected,
                     indicatorColor = Color.Transparent

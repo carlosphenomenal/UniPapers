@@ -1,5 +1,6 @@
 package com.unipapers.unipapers_frontend.feature.pdfviewer.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,8 @@ fun PdfViewerScreen(
     url: String,
     onBackClick: () -> Unit
 ) {
+    BackHandler(onBack = onBackClick)
+
     Scaffold(
         topBar = {
             TopAppBar(

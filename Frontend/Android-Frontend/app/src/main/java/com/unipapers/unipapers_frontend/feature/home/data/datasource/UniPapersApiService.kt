@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.home.data.datasource
 
 import com.unipapers.unipapers_frontend.feature.home.data.model.PaperDto
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -9,5 +10,5 @@ interface UniPapersApiService {
     suspend fun getPastPapers(
         @Query("query") query: String?,
         @Query("filter") filter: String?
-    ): List<PaperDto>
+    ): Response<List<PaperDto>>
 }

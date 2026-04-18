@@ -62,8 +62,13 @@ object RepositoryModule {
     @Singleton
     fun provideHomeRepository(
         apiService: UniPapersApiService,
-        fileApi: FileApi
+        fileApi: FileApi,
+        gson: Gson
     ): HomeRepository {
-        return HomeRepositoryImpl(apiService = apiService, fileApi = fileApi)
+        return HomeRepositoryImpl(
+            apiService = apiService,
+            fileApi = fileApi,
+            gson = gson
+        )
     }
 }

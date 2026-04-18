@@ -21,13 +21,16 @@ class HomeViewModel @Inject constructor(
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
 
+    private var lastAction: (() -> Unit)? = null
+
     init {
         loadPastPapers()
     }
 
     private fun loadPastPapers() {
+        lastAction = { loadPastPapers() }
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
             val result = getPastPapersUseCase(
                 query = _state.value.searchQuery,
                 filter = _state.value.selectedFilter
@@ -58,6 +61,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onPaperClicked(paperId: String) {
+        lastAction = { onPaperClicked(paperId) }
         viewModelScope.launch {
             _state.update { it.copy(isOpeningPdf = true, errorMessage = null) }
             val result = getSignedUrlUseCase(paperId)
@@ -73,6 +77,10 @@ class HomeViewModel @Inject constructor(
                 ) }
             }
         }
+    }
+
+    fun retry() {
+        lastAction?.invoke()
     }
 
     fun resetSignedUrl() {

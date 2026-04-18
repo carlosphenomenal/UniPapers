@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.R
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
 
 enum class DownloadStatus {
@@ -68,7 +69,7 @@ fun DownloadScreen(
                             text = stringResource(R.string.downloads_title),
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
+                                color = SimpleBlue
                             )
                         )
                         Text(
@@ -163,7 +164,7 @@ fun DownloadCard(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_file_text),
                     contentDescription = null,
-                    tint = Color(0xFF1E3A8A),
+                    tint = SimpleBlue,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -176,7 +177,7 @@ fun DownloadCard(
                         text = item.title,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E3A8A)
+                            color = SimpleBlue
                         )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -188,7 +189,7 @@ fun DownloadCard(
                             text = item.year,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color(0xFF1E3A8A)
+                                color = SimpleBlue
                             )
                         )
                     }
@@ -208,7 +209,7 @@ fun DownloadCard(
                             .fillMaxWidth()
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
-                        color = Color(0xFF1E3A8A),
+                        color = SimpleBlue,
                         trackColor = Color(0xFFF1F5F9)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -280,7 +281,7 @@ fun DownloadCard(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_play),
                         contentDescription = stringResource(R.string.content_desc_resume),
-                        tint = Color(0xFF1E3A8A),
+                        tint = SimpleBlue,
                         modifier = Modifier.size(24.dp)
                     )
                 }
