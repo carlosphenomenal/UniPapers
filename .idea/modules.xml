@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Android-Frontend.UniPapers.iml" filepath="$PROJECT_DIR$/.idea/modules/Android-Frontend.UniPapers.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/UniPapers.iml" filepath="$PROJECT_DIR$/.idea/UniPapers.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/UniPapers.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/UniPapers.app.iml" />
     </modules>
   </component>
 </project>
