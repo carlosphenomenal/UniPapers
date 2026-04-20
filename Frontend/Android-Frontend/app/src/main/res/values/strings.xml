@@ -8,6 +8,8 @@
     <string name="downloading">Downloading…</string>
     <string name="paused">Paused</string>
     <string name="failed">Failed</string>
+    <string name="pending">Pending</string>
+    <string name="waiting_for_network">Waiting for network</string>
     <string name="content_desc_back">Back</string>
     <string name="content_desc_pause">Pause</string>
     <string name="content_desc_resume">Resume</string>
