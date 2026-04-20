@@ -194,7 +194,9 @@ class FileRepositoryImpl @Inject constructor(
      * @param downloadId The ID assigned by [DownloadManager].
      */
     override fun syncDownloadedFile(downloadId: Long) {
-        refreshTrackedDownload(downloadId)
+        CoroutineScope(Dispatchers.IO).launch {
+            refreshTrackedDownload(downloadId)
+        }
     }
 
     /**
@@ -338,8 +340,9 @@ class FileRepositoryImpl @Inject constructor(
      */
     private fun refreshPersistedDownloadStates() {
         CoroutineScope(Dispatchers.IO).launch {
-            val persistedIds = downloadDao.getAllTrackedDownloads().map { it.downloadId }
-            persistedIds.forEach { refreshTrackedDownload(it) }
+            downloadDao.getAllTrackedDownloads()
+                .map { it.downloadId }
+                .forEach { refreshTrackedDownload(it) } // awaited
         }
     }
 
@@ -347,62 +350,64 @@ class FileRepositoryImpl @Inject constructor(
      * Queries [DownloadManager] for the current status of a specific download
      * and updates the database.
      */
-    private fun refreshTrackedDownload(downloadId: Long) {
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return
-        val query = DownloadManager.Query().setFilterById(downloadId)
+    private suspend fun refreshTrackedDownload(downloadId: Long) {
+        withContext(Dispatchers.IO) {
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return@withContext
+            val query = DownloadManager.Query().setFilterById(downloadId)
 
-        runCatching {
-            downloadManager.query(query)?.use { cursor ->
-                if (!cursor.moveToFirst()) {
-                    removeTrackedDownload(downloadId)
-                    return
-                }
+            runCatching {
+                downloadManager.query(query)?.use { cursor ->
+                    if (!cursor.moveToFirst()) {
+                        removeTrackedDownload(downloadId)
+                        return@runCatching
+                    }
 
-                val status = cursor.getIntByName(DownloadManager.COLUMN_STATUS) ?: return
-                val downloadedBytes = cursor.getLongByName(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR) ?: 0L
-                val totalBytes = cursor.getLongByName(DownloadManager.COLUMN_TOTAL_SIZE_BYTES) ?: -1L
-                val reasonCode = cursor.getIntByName(DownloadManager.COLUMN_REASON)
-                val progressPercent = calculateProgressPercent(downloadedBytes, totalBytes, status)
+                    val status = cursor.getIntByName(DownloadManager.COLUMN_STATUS) ?: return@runCatching
+                    val downloadedBytes = cursor.getLongByName(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR) ?: 0L
+                    val totalBytes = cursor.getLongByName(DownloadManager.COLUMN_TOTAL_SIZE_BYTES) ?: -1L
+                    val reasonCode = cursor.getIntByName(DownloadManager.COLUMN_REASON)
+                    val progressPercent = calculateProgressPercent(downloadedBytes, totalBytes, status)
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    val existing = downloadDao.getDownloadById(downloadId)
-                    if (existing != null) {
-                        // Map DownloadManager status to our DownloadStatus
-                        val mappedStatus = when (status) {
-                            DownloadManager.STATUS_PENDING -> DownloadStatus.PENDING
-                            DownloadManager.STATUS_RUNNING -> DownloadStatus.DOWNLOADING
-                            DownloadManager.STATUS_PAUSED -> {
-                                when (reasonCode) {
-                                    DownloadManager.PAUSED_WAITING_FOR_NETWORK,
-                                    DownloadManager.PAUSED_QUEUED_FOR_WIFI -> DownloadStatus.WAITING_FOR_NETWORK
-                                    else -> DownloadStatus.PAUSED
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val existing = downloadDao.getDownloadById(downloadId)
+                        if (existing != null) {
+                            // Map DownloadManager status to our DownloadStatus
+                            val mappedStatus = when (status) {
+                                DownloadManager.STATUS_PENDING -> DownloadStatus.PENDING
+                                DownloadManager.STATUS_RUNNING -> DownloadStatus.DOWNLOADING
+                                DownloadManager.STATUS_PAUSED -> {
+                                    when (reasonCode) {
+                                        DownloadManager.PAUSED_WAITING_FOR_NETWORK,
+                                        DownloadManager.PAUSED_QUEUED_FOR_WIFI -> DownloadStatus.WAITING_FOR_NETWORK
+                                        else -> DownloadStatus.PAUSED
+                                    }
                                 }
+                                DownloadManager.STATUS_SUCCESSFUL -> DownloadStatus.COMPLETED
+                                DownloadManager.STATUS_FAILED -> DownloadStatus.FAILED
+                                else -> existing.status
                             }
-                            DownloadManager.STATUS_SUCCESSFUL -> DownloadStatus.COMPLETED
-                            DownloadManager.STATUS_FAILED -> DownloadStatus.FAILED
-                            else -> existing.status
-                        }
 
-                        // If user manually paused, respect that unless it finished or failed.
-                        // We also treat WAITING_FOR_NETWORK as a transient auto-pause that shouldn't
-                        // override a deliberate user PAUSE.
-                        val finalStatus = if (existing.status == DownloadStatus.PAUSED &&
-                            (mappedStatus == DownloadStatus.DOWNLOADING || mappedStatus == DownloadStatus.WAITING_FOR_NETWORK)) {
-                            DownloadStatus.PAUSED
-                        } else {
-                            mappedStatus
-                        }
+                            // If user manually paused, respect that unless it finished or failed.
+                            // We also treat WAITING_FOR_NETWORK as a transient auto-pause that shouldn't
+                            // override a deliberate user PAUSE.
+                            val finalStatus = if (existing.status == DownloadStatus.PAUSED &&
+                                (mappedStatus == DownloadStatus.DOWNLOADING || mappedStatus == DownloadStatus.WAITING_FOR_NETWORK)) {
+                                DownloadStatus.PAUSED
+                            } else {
+                                mappedStatus
+                            }
 
-                        val updated = existing.copy(
-                            status = finalStatus,
-                            statusCode = status,
-                            progressPercent = progressPercent,
-                            downloadedBytes = downloadedBytes,
-                            totalBytes = totalBytes,
-                            reasonCode = reasonCode,
-                            updatedAtMillis = System.currentTimeMillis()
-                        )
-                        downloadDao.upsertDownload(updated)
+                            val updated = existing.copy(
+                                status = finalStatus,
+                                statusCode = status,
+                                progressPercent = progressPercent,
+                                downloadedBytes = downloadedBytes,
+                                totalBytes = totalBytes,
+                                reasonCode = reasonCode,
+                                updatedAtMillis = System.currentTimeMillis()
+                            )
+                            downloadDao.upsertDownload(updated)
+                        }
                     }
                 }
             }
@@ -439,7 +444,7 @@ class FileRepositoryImpl @Inject constructor(
                     if (pendingIds.isEmpty()) break
 
                     pendingIds.forEach { refreshTrackedDownload(it) }
-                    delay(1_500L) // Poll every 1.5 seconds
+                    delay(50L) // Poll every 0.05 seconds
                 }
             } finally {
                 isPolling.set(false)
