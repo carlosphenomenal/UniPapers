@@ -83,7 +83,9 @@ class HomeViewModel @Inject constructor(
 
     fun onDownloadClicked(paperId: String) {
         viewModelScope.launch {
-            downloadFileUseCase(paperId)
+            downloadFileUseCase(paperId).onFailure { error ->
+                _state.update { it.copy(errorMessage = error.message) }
+            }
         }
     }
 

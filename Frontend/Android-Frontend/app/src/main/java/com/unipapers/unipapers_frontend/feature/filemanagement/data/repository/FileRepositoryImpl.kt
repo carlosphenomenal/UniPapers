@@ -7,7 +7,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
@@ -125,11 +124,7 @@ class FileRepositoryImpl @Inject constructor(
      */
     @RequiresApi(Build.VERSION_CODES.Q)
     override suspend fun downloadFile(pastPaperPublicId: String): Result<Unit> {
-        var createdUri: Uri? = null
-        var enqueuedDownloadId: Long? = null
-
         return try {
-            // Get the file key and the signed url that will be used to download the file from the backend
             val response = fileApi.getPresignedDownloadUrl(pastPaperPublicId)
             if (!response.isSuccessful) {
                 return Result.failure(Exception("Failed to get presigned download URL: ${response.message()}"))
@@ -138,7 +133,6 @@ class FileRepositoryImpl @Inject constructor(
             val responseBody = response.body()
                 ?: return Result.failure(Exception("Response body is null"))
 
-            // Extract the signed url and the key from the body
             val signedUrl = responseBody.signedUrl
             val key = responseBody.key
 
@@ -146,13 +140,8 @@ class FileRepositoryImpl @Inject constructor(
                 return Result.failure(IllegalArgumentException("Signed URL is empty"))
             }
 
-            // Create a file name (normalized key)
             val fileName = normalizeFileName(key)
-            //Create the uri where the download will be stored
-            createdUri = createDownloadDestination(fileName)
-                ?: return Result.failure(IOException("Failed to create destination in Downloads/UniPapers"))
 
-            // Initialize the download request using Download manager
             val request = DownloadManager.Request(signedUrl.toUri()).apply {
                 setTitle(fileName)
                 setDescription("Downloading $fileName")
@@ -160,23 +149,25 @@ class FileRepositoryImpl @Inject constructor(
                 setAllowedOverMetered(true)
                 setAllowedOverRoaming(true)
                 setMimeType("application/pdf")
-                setDestinationUri(createdUri)
+                // I'm using this instead of setDestinationUri + MediaStore
+                setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    "UniPapers/$fileName"
+                )
             }
 
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
                 ?: return Result.failure(IllegalStateException("DownloadManager service is unavailable"))
 
-            // Get the download id of this download
-            enqueuedDownloadId = downloadManager.enqueue(request)
+            val enqueuedDownloadId = downloadManager.enqueue(request)
 
-            // Add the download to the active downloads list for tracking
             val now = System.currentTimeMillis()
             upsertTrackedDownload(
                 Download(
                     downloadId = enqueuedDownloadId,
                     pastPaperPublicId = pastPaperPublicId,
                     fileName = fileName,
-                    destinationUri = createdUri.toString(),
+                    destinationUri = "${Environment.DIRECTORY_DOWNLOADS}/UniPapers/$fileName",
                     status = DownloadStatus.PENDING,
                     statusCode = DownloadManager.STATUS_PENDING,
                     progressPercent = 0,
@@ -188,24 +179,11 @@ class FileRepositoryImpl @Inject constructor(
                 )
             )
 
-            // Refresh the downloads to ensure that the newly added download is recognized
             refreshTrackedDownload(enqueuedDownloadId)
-
-            // Ensure that the polling coroutine is running. If it's not, it will be started.
             ensurePolling()
 
             Result.success(Unit)
-        } catch (e: CancellationException) {
-            cleanupCancelledDownload(createdUri, enqueuedDownloadId)
-            throw e
-        } catch (e: IllegalArgumentException) {
-            cleanupCancelledDownload(createdUri, enqueuedDownloadId)
-            Result.failure(IllegalArgumentException("Invalid download URL or destination", e))
-        } catch (e: SecurityException) {
-            cleanupCancelledDownload(createdUri, enqueuedDownloadId)
-            Result.failure(SecurityException("No permission to write to Downloads", e))
         } catch (e: Exception) {
-            cleanupCancelledDownload(createdUri, enqueuedDownloadId)
             Result.failure(e)
         }
     }
@@ -301,34 +279,6 @@ class FileRepositoryImpl @Inject constructor(
                 }
                 refreshTrackedDownload(downloadId)
             }
-        }
-    }
-
-    /**
-     * Creates a placeholder in [MediaStore] for the incoming download.
-     * This allows us to pre-define the file name and sub-directory (Downloads/UniPapers).
-     *
-     * @param fileName Desired name for the file.
-     * @return [Uri] of the created placeholder, or null if creation fails.
-     */
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun createDownloadDestination(fileName: String): Uri? {
-        // Define the metadata of the file
-        val values = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-            put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
-            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/UniPapers")
-            put(MediaStore.Downloads.IS_PENDING, 1)
-        }
-
-        return context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)?.also { uri ->
-            // Set the download to pending
-            context.contentResolver.update(
-                uri,
-                ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) },
-                null,
-                null
-            )
         }
     }
 
