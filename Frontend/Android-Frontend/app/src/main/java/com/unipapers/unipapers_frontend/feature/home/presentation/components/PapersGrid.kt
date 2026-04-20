@@ -9,7 +9,8 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 @Composable
 fun PapersGrid(
     papers: List<Paper>,
-    onPaperClick: (String) -> Unit
+    onPaperClick: (String) -> Unit,
+    onDownloadClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -24,6 +25,7 @@ fun PapersGrid(
                     PaperCard(
                         paper = paper,
                         onPaperClick = onPaperClick,
+                        onDownloadClick = onDownloadClick,
                         modifier = Modifier.weight(1f)
                     )
                 }

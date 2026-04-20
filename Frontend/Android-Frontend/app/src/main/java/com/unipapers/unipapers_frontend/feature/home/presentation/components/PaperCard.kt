@@ -41,6 +41,7 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 fun PaperCard(
     paper: Paper,
     onPaperClick: (String) -> Unit,
+    onDownloadClick: (String) -> Unit,
     modifier: Modifier = Modifier.width(180.dp)
 ) {
     Card(
@@ -113,7 +114,7 @@ fun PaperCard(
                             .size(28.dp)
                             .clip(CircleShape)
                             .background(Color(0xFFE3F2FD))
-                            .clickable { },
+                            .clickable { onDownloadClick(paper.id) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -134,7 +135,11 @@ fun PaperCard(
 fun PaperCardPreview() {
     UniPapersTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-            PaperCard(paper = dummyPapers[0], onPaperClick = {})
+            PaperCard(
+                paper = dummyPapers[0],
+                onPaperClick = {},
+                onDownloadClick = {}
+            )
         }
     }
 }

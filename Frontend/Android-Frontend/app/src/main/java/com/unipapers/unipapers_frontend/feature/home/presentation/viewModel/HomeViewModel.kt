@@ -2,6 +2,7 @@ package com.unipapers.unipapers_frontend.feature.home.presentation.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.DownloadFileUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetPastPapersUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetSignedUrlUseCase
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getPastPapersUseCase: GetPastPapersUseCase,
-    private val getSignedUrlUseCase: GetSignedUrlUseCase
+    private val getSignedUrlUseCase: GetSignedUrlUseCase,
+    private val downloadFileUseCase: DownloadFileUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -76,6 +78,12 @@ class HomeViewModel @Inject constructor(
                     errorMessage = error.message ?: "Failed to get signed URL"
                 ) }
             }
+        }
+    }
+
+    fun onDownloadClicked(paperId: String) {
+        viewModelScope.launch {
+            downloadFileUseCase(paperId)
         }
     }
 

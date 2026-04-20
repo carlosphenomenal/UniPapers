@@ -71,6 +71,7 @@ fun HomeScreen(
             onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
             onFilterSelected = { viewModel.onFilterSelected(it) },
             onPaperClick = { viewModel.onPaperClicked(it) },
+            onDownloadClick = { viewModel.onDownloadClicked(it) },
             onRetry = { viewModel.retry() }
         )
     }
@@ -82,6 +83,7 @@ fun HomeScreenContent(
     onSearchQueryChanged: (String) -> Unit,
     onFilterSelected: (PaperType?) -> Unit,
     onPaperClick: (String) -> Unit,
+    onDownloadClick: (String) -> Unit,
     onRetry: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -128,7 +130,8 @@ fun HomeScreenContent(
                 // Horizontal scrolling paper cards
                 RecentPapersRow(
                     papers = state.recentPapers,
-                    onPaperClick = onPaperClick
+                    onPaperClick = onPaperClick,
+                    onDownloadClick = onDownloadClick
                 )
             }
 
@@ -165,7 +168,8 @@ fun HomeScreenContent(
                         // Course unit grid
                         PapersGrid(
                             papers = state.papers,
-                            onPaperClick = onPaperClick
+                            onPaperClick = onPaperClick,
+                            onDownloadClick = onDownloadClick
                         )
                     }
                 }
@@ -319,6 +323,7 @@ fun HomeScreenPreview() {
         onSearchQueryChanged = {},
         onFilterSelected = {},
         onPaperClick = {},
+        onDownloadClick = {},
         onRetry = {}
     )
 }

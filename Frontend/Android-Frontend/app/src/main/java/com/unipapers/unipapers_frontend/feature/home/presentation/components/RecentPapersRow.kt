@@ -11,14 +11,19 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 @Composable
 fun RecentPapersRow(
     papers: List<Paper>,
-    onPaperClick: (String) -> Unit
+    onPaperClick: (String) -> Unit,
+    onDownloadClick: (String) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(papers) { paper ->
-            PaperCard(paper = paper, onPaperClick = onPaperClick)
+            PaperCard(
+                paper = paper,
+                onPaperClick = onPaperClick,
+                onDownloadClick = onDownloadClick
+            )
         }
     }
 }
