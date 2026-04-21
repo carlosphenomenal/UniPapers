@@ -1,17 +1,17 @@
 package com.unipapers.backend.Modules.FileManagement.Services;
 
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
+import com.unipapers.backend.Modules.Course.Models.Course;
+import com.unipapers.backend.Modules.Course.Repositories.CourseRepo;
 import com.unipapers.backend.Modules.FileManagement.Dtos.CourseResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Dtos.CreateCourseDto;
-import com.unipapers.backend.Modules.FileManagement.Models.Course;
-import com.unipapers.backend.Modules.FileManagement.Repositories.CourseRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@Service("fileManagementCourseService")
 @RequiredArgsConstructor
 public class CourseService {
 
