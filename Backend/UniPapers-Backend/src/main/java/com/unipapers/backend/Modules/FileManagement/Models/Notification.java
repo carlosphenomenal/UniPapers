@@ -23,7 +23,7 @@ public class Notification {
     private String message;
 
     @Builder.Default
-    private boolean isRead = false;
+    private boolean read = false;
 
     private Long userId;
     private LocalDateTime createdAt;

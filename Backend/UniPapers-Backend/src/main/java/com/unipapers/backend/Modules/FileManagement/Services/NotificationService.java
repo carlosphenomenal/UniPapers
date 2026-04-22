@@ -19,7 +19,7 @@ public class NotificationService {
         notificationRepo.save(Notification.builder()
                 .userId(userId)
                 .message(message)
-                .isRead(false)
+                .read(false)
                 .createdAt(LocalDateTime.now())
                 .build());
     }
@@ -44,7 +44,7 @@ public class NotificationService {
     }
 
     public long getUnreadCount(Long userId) {
-        return notificationRepo.countByUserIdAndIsReadFalse(userId);
+        return notificationRepo.countByUserIdAndReadFalse(userId);
     }
 
     //count of unread 

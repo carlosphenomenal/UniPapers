@@ -4,6 +4,6 @@ import java.time.LocalDateTime;
 
 public class NotificationDto {
     private String message;
-    private boolean isRead;
+    private boolean read;
     private LocalDateTime createdAt;
 }
