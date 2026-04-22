@@ -23,4 +23,5 @@ public class FileUploadDto {
     private int semester;
     private List<String> topicsNames;
 
+    private Long getUploadedByUserId;
 }

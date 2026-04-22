@@ -35,6 +35,7 @@ public class FileUploadService {
     private final CourseRepo courseRepo;
     private final R2StorageService r2StorageService;
     private final PastPaperRepo pastPaperRepo;
+    private final NotificationService notificationService; //for notifications.
 
     @Transactional
     public FileUploadResponseDto initializeUploadFile(FileUploadDto fileUploadDto) throws BadRequestException {
@@ -96,6 +97,13 @@ public class FileUploadService {
 
         // Save the past paper to the db
         PastPaper savedPastPaper = pastPaperRepo.save(pastPaper);
+
+        //notification logic
+        notificationService.createNotification(
+                fileUploadDto.getUploadedByUserId(),
+                "New past paper uploaded for "
+                        + course.getCourseName()
+        );
 
         // Create topics
         List<Topic> topics = new ArrayList<>();
