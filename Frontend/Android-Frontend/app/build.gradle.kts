@@ -33,7 +33,7 @@ android {
         require(baseUrl.isNotBlank()) {
             "Missing base_url in local.properties. Copy local.properties.example to local.properties and set backend base_url."
         }
-        ;val normalizedBaseUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        val normalizedBaseUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
         buildConfigField("String", "BASE_URL", "\"$normalizedBaseUrl\"")
     }
 
