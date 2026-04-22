@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.FileManagement.Repositories;
 
 import com.unipapers.backend.Modules.FileManagement.Enums.PastPaperType;
+import com.unipapers.backend.Modules.FileManagement.Enums.VerificationStatus;
 import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,6 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface PastPaperRepo extends JpaRepository<PastPaper, Long> {
+
+    java.util.List<PastPaper> findTop10ByVerificationStatusOrderByAddedAtDesc(VerificationStatus verificationStatus);
 
     Optional<PastPaper> findByPublicId(String publicId);
 
