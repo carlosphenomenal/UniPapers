@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class CreateCourseDto {
     private String courseCode;
     private String courseName;
+    private String program;
 }
