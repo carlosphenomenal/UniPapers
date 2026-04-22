@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController("fileManagementCourseController")
-@RequestMapping("/api/courses")
+@RestController
+@RequestMapping("/courses")
 @RequiredArgsConstructor
 public class CourseController {
     private final CourseService courseService;
@@ -28,6 +28,6 @@ public class CourseController {
     @DeleteMapping("/{publicId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable String publicId) {
         courseService.deleteCourse(publicId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 }
