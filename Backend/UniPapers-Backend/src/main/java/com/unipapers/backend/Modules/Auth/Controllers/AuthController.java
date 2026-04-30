@@ -1,6 +1,7 @@
 package com.unipapers.backend.Modules.Auth.Controllers;
 
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.VerifyEmailRequestDto;
 import com.unipapers.backend.Modules.Auth.Services.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,16 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequestDto signupRequestDto){
         return ResponseEntity.ok().body(authService.signup(signupRequestDto));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
+        return ResponseEntity.ok().body(
+                authService.verifyEmail(
+                        verifyEmailRequestDto.getEmail(),
+                        verifyEmailRequestDto.getVerificationCode()
+                )
+        );
     }
 
 }
