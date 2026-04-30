@@ -30,3 +30,7 @@ cloudflare:
     secret-key: your-r2-secret-access-key
     bucket-name: your-bucket-name
     public-url: https://pub-xxxx.r2.dev     # Public bucket URL for serving files
+
+sendgrid:
+  api-key: ${SENDGRID_API_KEY:your_api_key_here}
+  from-email: ${SENDGRID_FROM_EMAIL:your_verified_sender_email_here}
