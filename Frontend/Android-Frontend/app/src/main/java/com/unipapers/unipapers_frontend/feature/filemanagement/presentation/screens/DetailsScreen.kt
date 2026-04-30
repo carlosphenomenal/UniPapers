@@ -202,7 +202,7 @@ fun SelectionChip(
 @Composable
 fun DetailsScreenPreview() {
     DetailsScreen(
-        courses = listOf(Course(publicId = "course-1", courseCode = "CSC 1100")),
+        courses = listOf(Course(publicId = "course-1", courseCode = "CSC 1100", courseName = "Computer Science")),
         selectedCoursePublicId = "",
         onCourseSelected = {},
         paperType = "",

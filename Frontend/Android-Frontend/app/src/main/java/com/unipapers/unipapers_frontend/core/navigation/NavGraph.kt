@@ -7,13 +7,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.browse.presentation.BrowsePapersScreen
+import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
 import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
+import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun NavGraph(
@@ -30,7 +37,37 @@ fun NavGraph(
             HomeScreen()
         }
         composable(Screen.Browse.route) {
-            PlaceholderScreen("Browse Screen")
+            CourseUnitScreen(
+                onCourseClick = { courseCode ->
+                    navController.navigate(Screen.BrowsePapers.createRoute(courseCode))
+                }
+            )
+        }
+        composable(
+            route = Screen.BrowsePapers.route,
+            arguments = listOf(navArgument("courseCode") { type = NavType.StringType })
+        ) {
+            BrowsePapersScreen(
+                onBackClick = { navController.popBackStack() },
+                onPaperClick = { paperId ->
+                    // For now, we'll navigate to PDF viewer directly if we had the URL.
+                    // In a real app, you might fetch the paper details first to get the URL.
+                },
+                onNavigateToPdf = { url ->
+                    navController.navigate(Screen.PdfViewer.createRoute(url))
+                }
+            )
+        }
+        composable(
+            route = Screen.PdfViewer.route,
+            arguments = listOf(navArgument("url") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedUrl = backStackEntry.arguments?.getString("url") ?: ""
+            val url = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+            PdfViewerScreen(
+                url = url,
+                onBackClick = { navController.popBackStack() }
+            )
         }
         composable(Screen.Downloads.route) {
             DownloadScreen(
