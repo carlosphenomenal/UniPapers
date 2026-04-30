@@ -11,8 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -36,6 +36,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Builder.Default
+    private boolean isEmailVerified = false;
+
     @Column(nullable = false, unique = true)
     private Long studentNumber;
 
@@ -49,7 +52,12 @@ public class User {
 
     private Integer semester;
 
-    private List<Role> roles = new ArrayList<>();
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<Role> roles = Set.of(Role.USER);
 
     @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<PastPaper> pastPapers;
