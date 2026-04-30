@@ -17,4 +17,6 @@ public interface UserRepo extends JpaRepository<User, Long> {
 	@Modifying
 	@Query("update User u set u.semester = :semester")
 	void updateAllSemesters(Integer semester);
+
+	Optional<User> findByEmailOrStudentNumber(String identifier, Long studentNum);
 }

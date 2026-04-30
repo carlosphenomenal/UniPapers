@@ -34,3 +34,11 @@ cloudflare:
 sendgrid:
   api-key: ${SENDGRID_API_KEY:your_api_key_here}
   from-email: ${SENDGRID_FROM_EMAIL:your_verified_sender_email_here}
+
+auth:
+  verification-code:
+    expiry-minutes: 15
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}

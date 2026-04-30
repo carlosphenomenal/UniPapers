@@ -1,6 +1,7 @@
 package com.unipapers.backend.Exceptions;
 
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
+import com.unipapers.backend.Exceptions.CustomExceptions.InvalidRefreshTokenException;
 import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperNotFoundException;
 import com.unipapers.backend.Exceptions.Models.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,26 @@ public class GlobalExceptionHandler {
         log.warn("Invalid request data: {}", ex.getMessage());
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidRefreshTokenException(
+            InvalidRefreshTokenException ex,
+            HttpServletRequest request
+    ) {
+
+        ApiError error = new ApiError(
+                Instant.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                UUID.randomUUID().toString()
+        );
+
+        log.warn("Invalid refresh token: {}", ex.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)

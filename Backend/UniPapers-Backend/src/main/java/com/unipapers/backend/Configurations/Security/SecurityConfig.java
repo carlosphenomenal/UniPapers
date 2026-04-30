@@ -1,24 +1,45 @@
 package com.unipapers.backend.Configurations.Security;
 
+import com.unipapers.backend.Exceptions.SecurityFilterChainExceptions.RestAccessDeniedHandler;
+import com.unipapers.backend.Exceptions.SecurityFilterChainExceptions.RestAuthenticationEntryPoint;
+import com.unipapers.backend.Modules.Auth.Services.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   AuthenticationProvider authenticationProvider,
+                                                   RestAccessDeniedHandler accessDeniedHandler,
+                                                   RestAuthenticationEntryPoint authenticationEntryPoint) {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // disable CSRF
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // allow everything for now, we'll implement spring security later
+                        .requestMatchers("/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exception -> exception
+                        // Handle 401
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        // Handle 403
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 .build();
     }
@@ -34,6 +55,23 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(12);
     }
 
+    /**
+     * Configures and provides an {@link AuthenticationProvider} bean.
+     * This method sets up a {@link DaoAuthenticationProvider}, integrates the application's
+     * {@link CustomUserDetailsService}, and configures the provided password encoder for authenticating users.
+     *
+     * @param passwordEncoder the {@link PasswordEncoder} to be used for encoding and verifying passwords.
+     * @return an {@link AuthenticationProvider} configured with the application's {@link CustomUserDetailsService}
+     *         and the provided {@link PasswordEncoder}.
+     */
+    @Bean
+    public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder, CustomUserDetailsService customUserDetailsService){
+
+        DaoAuthenticationProvider provider=new DaoAuthenticationProvider(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+
+    }
 
     /**
      * Provides an {@link AuthenticationManager} bean for managing authentication logic within the application.
