@@ -221,7 +221,7 @@ fun RegisterContent(
                 .height(56.dp),
             shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF8BA2C1)
+                containerColor = SimpleBlue
             )
         ) {
             Text(
