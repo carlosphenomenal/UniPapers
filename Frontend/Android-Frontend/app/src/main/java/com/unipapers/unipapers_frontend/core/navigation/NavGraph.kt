@@ -12,6 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.auth.presentation.login.LoginScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.register.RegisterScreen
 import com.unipapers.unipapers_frontend.feature.browse.presentation.BrowsePapersScreen
 import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
@@ -77,9 +79,7 @@ fun NavGraph(
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    navController.navigate(Screen.Login.route)
                 }
             )
         }
@@ -87,6 +87,33 @@ fun NavGraph(
             UploadFlowScreen(
                 onBackClick = { navController.popBackStack() },
                 toastManager = toastManager
+            )
+        }
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToForgotPassword = {
+                    // TODO: Implement forgot password
+                },
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                }
             )
         }
     }
