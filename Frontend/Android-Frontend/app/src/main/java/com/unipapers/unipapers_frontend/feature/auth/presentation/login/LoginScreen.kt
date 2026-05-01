@@ -70,7 +70,7 @@ fun LoginScreen(
 
     LoginContent(
         state = state,
-        onEmailChange = viewModel::onEmailChange,
+        onEmailChange = viewModel::onIdentifierChange,
         onPasswordChange = viewModel::onPasswordChange,
         onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
         onSignIn = viewModel::onSignIn,
@@ -157,7 +157,7 @@ fun LoginContent(
             }
 
             OutlinedTextField(
-                value = state.email,
+                value = state.identifier,
                 onValueChange = onEmailChange,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {

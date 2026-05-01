@@ -9,8 +9,8 @@ class LoginViewModel : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
 
-    fun onEmailChange(email: String) {
-        _state.update { it.copy(email = email) }
+    fun onIdentifierChange(identifier: String) {
+        _state.update { it.copy(identifier = identifier) }
     }
 
     fun onPasswordChange(password: String) {
