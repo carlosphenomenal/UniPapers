@@ -38,8 +38,8 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification-code")
-    public ResponseEntity<?> resendVerificationCode(@RequestBody SignupRequestDto signupRequestDto){
-        return ResponseEntity.ok().body(authService.resendVerificationCode(signupRequestDto.getEmail()));
+    public ResponseEntity<?> resendVerificationCode(@RequestParam("email") String email){
+        return ResponseEntity.ok().body(authService.resendVerificationCode(email));
     }
 
     @PostMapping("/login")

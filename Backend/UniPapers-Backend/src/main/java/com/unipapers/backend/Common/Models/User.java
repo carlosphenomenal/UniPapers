@@ -4,7 +4,7 @@ import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Common.Enums.Role;
 import com.unipapers.backend.Modules.Auth.Models.Session;
 import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
-import com.unipapers.backend.Modules.FileManagement.Models.Program;
+import com.unipapers.backend.Modules.Program.Models.Program;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
