@@ -32,7 +32,14 @@ public class Session {
     private String publicSessionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_sessions_user_id",
+                    foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+            )
+    )
     private User user;
 
     @Column(name = "refresh_token_hash", nullable = false)

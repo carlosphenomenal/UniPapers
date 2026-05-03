@@ -7,6 +7,7 @@ import com.unipapers.backend.Modules.Auth.Dtos.VerifyEmailRequestDto;
 import com.unipapers.backend.Modules.Auth.Services.AuthService;
 import com.unipapers.backend.Modules.Auth.Services.SessionService;
 import com.unipapers.backend.Utils.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,12 +24,12 @@ public class AuthController {
     private final SessionService sessionService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequestDto signupRequestDto){
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequestDto signupRequestDto){
         return ResponseEntity.ok().body(Map.of("message", authService.signup(signupRequestDto)));
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
+    public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
         return ResponseEntity.ok().body(
                 Map.of("message", authService.verifyEmail(
                         verifyEmailRequestDto.getEmail(),
@@ -43,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto){
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto loginRequestDto){
         return ResponseEntity.ok().body(authService.login(loginRequestDto));
     }
 
