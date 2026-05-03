@@ -5,15 +5,13 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="sharedpref" path="unipapers_prefs.xml" />
+        <exclude domain="sharedpref" path="unipapers_auth_prefs.xml" />
+        <exclude domain="sharedpref" path="unipapers_secure_auth_prefs.xml" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="unipapers_prefs.xml" />
+        <exclude domain="sharedpref" path="unipapers_auth_prefs.xml" />
+        <exclude domain="sharedpref" path="unipapers_secure_auth_prefs.xml" />
     </device-transfer>
-    -->
 </data-extraction-rules>

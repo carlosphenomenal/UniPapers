@@ -1,5 +1,6 @@
 [versions]
 agp = "9.0.1"
+generativeai = "0.9.0"
 kotlin = "2.2.10"
 ksp = "2.3.2"
 hilt = "2.51.1"
@@ -18,6 +19,7 @@ databindingCompiler = "9.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
