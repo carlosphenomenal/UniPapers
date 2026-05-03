@@ -18,6 +18,7 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.scre
 import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.startup.StartupScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -29,9 +30,23 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = Screen.Startup.route,
         modifier = modifier
     ) {
+        composable(Screen.Startup.route) {
+            StartupScreen(
+                onAuthenticated = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Startup.route) { inclusive = true }
+                    }
+                },
+                onUnauthenticated = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Startup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen()
         }

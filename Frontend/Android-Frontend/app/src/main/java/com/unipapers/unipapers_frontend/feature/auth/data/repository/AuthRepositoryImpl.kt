@@ -72,7 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
             } else {
                 Resource.Error("Unauthorized")
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Resource.Error("Network error")
         }
     }

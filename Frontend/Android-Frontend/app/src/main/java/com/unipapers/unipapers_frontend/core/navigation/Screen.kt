@@ -25,4 +25,5 @@ sealed class Screen(val route: String) {
             return "pdf_viewer/$encodedUrl"
         }
     }
+    object Startup : Screen("startup")
 }
