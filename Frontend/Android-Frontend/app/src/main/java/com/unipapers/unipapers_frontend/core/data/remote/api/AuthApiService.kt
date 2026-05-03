@@ -1,8 +1,10 @@
 package com.unipapers.unipapers_frontend.core.data.remote.api
 
+import com.unipapers.unipapers_frontend.core.data.remote.dto.MessageResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupRequestDto
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.VerifyEmailRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -16,17 +18,17 @@ interface AuthApiService {
     @POST("auth/signup")
     suspend fun signup(
         @Body signupRequestDto: SignupRequestDto
-    ): Response<String>
+    ): Response<SignupResponseDto>
 
     @POST("auth/verify-email")
     suspend fun verifyEmail(
         @Body verifyEmailRequestDto: VerifyEmailRequestDto
-    ): Response<String>
+    ): Response<MessageResponseDto>
 
     @POST("auth/resend-verification-code")
     suspend fun resendVerificationCode(
         @Query("email") email: String
-    ): Response<String>
+    ): Response<MessageResponseDto>
 
     @POST("auth/login")
     suspend fun login(

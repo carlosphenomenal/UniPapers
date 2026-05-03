@@ -24,22 +24,22 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequestDto signupRequestDto){
-        return ResponseEntity.ok().body(authService.signup(signupRequestDto));
+        return ResponseEntity.ok().body(Map.of("message", authService.signup(signupRequestDto)));
     }
 
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
         return ResponseEntity.ok().body(
-                authService.verifyEmail(
+                Map.of("message", authService.verifyEmail(
                         verifyEmailRequestDto.getEmail(),
                         verifyEmailRequestDto.getVerificationCode()
-                )
+                ))
         );
     }
 
     @PostMapping("/resend-verification-code")
     public ResponseEntity<?> resendVerificationCode(@RequestParam("email") String email){
-        return ResponseEntity.ok().body(authService.resendVerificationCode(email));
+        return ResponseEntity.ok().body(Map.of("message", authService.resendVerificationCode(email)));
     }
 
     @PostMapping("/login")

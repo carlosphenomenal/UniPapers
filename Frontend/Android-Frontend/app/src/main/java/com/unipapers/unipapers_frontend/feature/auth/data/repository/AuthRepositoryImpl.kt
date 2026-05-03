@@ -3,7 +3,7 @@ package com.unipapers.unipapers_frontend.feature.auth.data.repository
 import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
 import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
-import com.unipapers.unipapers_frontend.core.data.remote.dto.ErrorResponseDto
+import com.unipapers.unipapers_frontend.core.data.remote.util.ErrorParser
 import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginResponseDto
@@ -20,15 +20,48 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
 
     override suspend fun signup(signupRequestDto: SignupRequestDto): Resource<String> {
-        return handleResponse { api.signup(signupRequestDto) }
+        return try {
+            val response = api.signup(signupRequestDto)
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it.message) }
+                    ?: Resource.Error("Success but empty body")
+            } else {
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
+            }
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
+        }
     }
 
     override suspend fun verifyEmail(verifyEmailRequestDto: VerifyEmailRequestDto): Resource<String> {
-        return handleResponse { api.verifyEmail(verifyEmailRequestDto) }
+        return try {
+            val response = api.verifyEmail(verifyEmailRequestDto)
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it.message) }
+                    ?: Resource.Error("Success but empty body")
+            } else {
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
+            }
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
+        }
     }
 
     override suspend fun resendVerificationCode(email: String): Resource<String> {
-        return handleResponse { api.resendVerificationCode(email) }
+        return try {
+            val response = api.resendVerificationCode(email)
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it.message) }
+                    ?: Resource.Error("Success but empty body")
+            } else {
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
+            }
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
+        }
     }
 
     override suspend fun login(loginRequestDto: LoginRequestDto): Resource<LoginResponseDto> {
@@ -41,12 +74,11 @@ class AuthRepositoryImpl @Inject constructor(
                     Resource.Success(loginResponse)
                 } ?: Resource.Error("Empty response body")
             } else {
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = gson.fromJson(errorBody, ErrorResponseDto::class.java)
-                Resource.Error(errorResponse?.message ?: "An unknown error occurred")
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
             }
-        } catch (e: Exception) {
-            Resource.Error(e.message ?: "Couldn't reach server. Check your internet connection.")
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
         }
     }
 
@@ -85,12 +117,11 @@ class AuthRepositoryImpl @Inject constructor(
                     Resource.Success(it)
                 } ?: Resource.Error("Success but empty body")
             } else {
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = gson.fromJson(errorBody, ErrorResponseDto::class.java)
-                Resource.Error(errorResponse?.message ?: "An unknown error occurred")
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
             }
-        } catch (e: Exception) {
-            Resource.Error(e.message ?: "Couldn't reach server. Check your internet connection.")
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
         }
     }
 }

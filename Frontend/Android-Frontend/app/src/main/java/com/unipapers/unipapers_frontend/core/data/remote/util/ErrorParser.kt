@@ -8,7 +8,7 @@ object ErrorParser {
     fun parseErrorMessage(response: Response<*>, gson: Gson): String {
         return try {
             val errorBody = response.errorBody()?.string()
-            if (errorBody != null) {
+            if (!errorBody.isNullOrBlank()) {
                 val errorResponse = gson.fromJson(errorBody, ErrorResponseDto::class.java)
                 errorResponse.message
             } else {

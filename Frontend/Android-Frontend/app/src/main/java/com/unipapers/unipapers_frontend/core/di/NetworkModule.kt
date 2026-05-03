@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.core.di
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
 import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
 import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
@@ -18,6 +19,7 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -28,7 +30,7 @@ object NetworkModule {
     @Suppress("unused")
     @Provides
     @Singleton
-    fun provideGson(): Gson = Gson()
+    fun provideGson(): Gson = GsonBuilder().setLenient().create()
 
     @Provides
     @Singleton
@@ -59,6 +61,7 @@ object NetworkModule {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.BASE_URL)
             .client(okHttpClient)
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
@@ -81,6 +84,7 @@ object NetworkModule {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.BASE_URL)
             .client(okHttpClient)
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }

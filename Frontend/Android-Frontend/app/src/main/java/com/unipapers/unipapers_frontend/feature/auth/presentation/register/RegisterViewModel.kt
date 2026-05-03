@@ -61,7 +61,6 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
-    // ...existing code...
     fun onFirstNameChange(firstName: String) {
         _state.update { it.copy(firstName = firstName, error = null) }
     }
@@ -75,7 +74,7 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun onStudentNumberChange(studentNumber: String) {
-        _state.update { it.copy(studentNumber = studentNumber, error = null) }
+        _state.update { it.copy(studentNumber = studentNumber.trim(), error = null) }
     }
 
      fun onProgrammeChange(programme: String, programmeId: String? = null) {
@@ -130,7 +129,8 @@ class RegisterViewModel @Inject constructor(
                  return@launch
              }
 
-             val studentNum = currentState.studentNumber.toLongOrNull()
+             val studentNumberTrimmed = currentState.studentNumber.trim()
+             val studentNum = studentNumberTrimmed.toLongOrNull()
              if (studentNum == null) {
                  _eventFlow.emit(UiEvent.ShowSnackbar("Invalid student number"))
                  return@launch
