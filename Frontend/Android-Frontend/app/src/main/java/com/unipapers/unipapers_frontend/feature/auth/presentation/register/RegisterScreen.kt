@@ -24,42 +24,66 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.ProgramResponseDto
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit,
-    viewModel: RegisterViewModel = viewModel()
+    onRegisterSuccess: (String) -> Unit,
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    RegisterContent(
-        state = state,
-        onFirstNameChange = viewModel::onFirstNameChange,
-        onLastNameChange = viewModel::onLastNameChange,
-        onEmailChange = viewModel::onEmailChange,
-        onStudentNumberChange = viewModel::onStudentNumberChange,
-        onProgrammeChange = viewModel::onProgrammeChange,
-        onYearOfStudyChange = viewModel::onYearOfStudyChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
-        onSignUp = viewModel::onSignUp,
-        onNavigateToLogin = onNavigateToLogin
-    )
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is RegisterViewModel.UiEvent.Success -> {
+                    onRegisterSuccess(event.email)
+                }
+                is RegisterViewModel.UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        RegisterContent(
+            modifier = Modifier.padding(padding),
+            state = state,
+            onFirstNameChange = viewModel::onFirstNameChange,
+            onLastNameChange = viewModel::onLastNameChange,
+            onEmailChange = viewModel::onEmailChange,
+            onStudentNumberChange = viewModel::onStudentNumberChange,
+            onProgrammeChange = viewModel::onProgrammeChange,
+            onYearOfStudyChange = viewModel::onYearOfStudyChange,
+            onPasswordChange = viewModel::onPasswordChange,
+            onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
+            onSignUp = viewModel::onSignUp,
+            onNavigateToLogin = onNavigateToLogin
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterContent(
+    modifier: Modifier = Modifier,
     state: RegisterState,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onStudentNumberChange: (String) -> Unit,
-    onProgrammeChange: (String) -> Unit,
+    onProgrammeChange: (String, String?) -> Unit,
     onYearOfStudyChange: (Int) -> Unit,
     onPasswordChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
@@ -67,7 +91,7 @@ fun RegisterContent(
     onNavigateToLogin: () -> Unit
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF8F9FB))
             .verticalScroll(rememberScrollState())
@@ -163,16 +187,16 @@ fun RegisterContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Programme
+        // Programme - Now with dropdown
         Column(modifier = Modifier.fillMaxWidth()) {
             Text("Programme", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
-            RegisterTextField(
-                value = state.programme,
-                onValueChange = onProgrammeChange,
-                placeholder = "Select your programme",
-                leadingIcon = Icons.Default.School,
-                trailingIcon = Icons.Default.KeyboardArrowDown,
-                readOnly = true
+            ProgrammeDropdown(
+                selectedProgramme = state.programme,
+                programs = state.programs,
+                isLoading = state.isProgramsLoading,
+                onProgrammeSelect = { programme ->
+                    onProgrammeChange(programme.programName, programme.publicId)
+                }
             )
         }
 
@@ -181,6 +205,8 @@ fun RegisterContent(
         // Year of Study
         Column(modifier = Modifier.fillMaxWidth()) {
             Text("Year of study", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+            val selectedProgram = state.programs.find { it.publicId == state.programmeId }
+            val maxYears = selectedProgram?.durationYears ?: 5
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -189,6 +215,7 @@ fun RegisterContent(
                     YearButton(
                         year = year,
                         isSelected = state.yearOfStudy == year,
+                        isEnabled = year <= maxYears,
                         onClick = { onYearOfStudyChange(year) }
                     )
                 }
@@ -211,6 +238,15 @@ fun RegisterContent(
             )
         }
 
+        if (state.error != null) {
+            Text(
+                text = state.error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         // Create Account Button
@@ -219,17 +255,22 @@ fun RegisterContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
+            enabled = !state.isLoading && !state.isProgramsLoading,
             shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = SimpleBlue
             )
         ) {
-            Text(
-                text = "Create account",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            if (state.isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text(
+                    text = "Create account",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -249,6 +290,116 @@ fun RegisterContent(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProgrammeDropdown(
+    selectedProgramme: String,
+    programs: List<ProgramResponseDto>,
+    isLoading: Boolean,
+    onProgrammeSelect: (ProgramResponseDto) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+    val filteredPrograms = if (searchText.isEmpty()) {
+        programs
+    } else {
+        programs.filter { programme ->
+            programme.programName.contains(searchText, ignoreCase = true) ||
+            programme.programCode.contains(searchText, ignoreCase = true)
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded && !isLoading,
+        onExpandedChange = {
+            if (!isLoading) {
+                expanded = it
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = searchText.ifEmpty { selectedProgramme },
+            onValueChange = { newValue ->
+                searchText = newValue
+                if (!expanded && programs.isNotEmpty()) {
+                    expanded = true
+                }
+            },
+            placeholder = {
+                Text(
+                    text = if (isLoading) "Loading programmes..." else "Search and select programme",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            leadingIcon = {
+                Icon(imageVector = Icons.Default.School, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+            },
+            trailingIcon = {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            },
+            modifier = Modifier
+                .menuAnchor(MenuAnchorType.PrimaryEditable)
+                .fillMaxWidth(),
+            enabled = !isLoading,
+            shape = RoundedCornerShape(25.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SimpleBlue,
+                unfocusedBorderColor = Color(0xFFE0E0E0),
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                disabledBorderColor = Color(0xFFE0E0E0),
+                disabledContainerColor = Color(0xFFF5F5F5),
+                disabledTextColor = Color.Gray
+            ),
+            singleLine = true
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded && !isLoading,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            if (programs.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No programmes available") },
+                    onClick = { expanded = false },
+                    enabled = false
+                )
+            } else if (filteredPrograms.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No matching programmes found") },
+                    onClick = { expanded = false },
+                    enabled = false
+                )
+            } else {
+                filteredPrograms.forEach { programme ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(programme.programName, fontWeight = FontWeight.Medium)
+                                Text(programme.programCode, fontSize = 12.sp, color = Color.Gray)
+                            }
+                        },
+                        onClick = {
+                            onProgrammeSelect(programme)
+                            searchText = programme.programName
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -313,15 +464,20 @@ fun RegisterTextField(
 fun YearButton(
     year: Int,
     isSelected: Boolean,
+    isEnabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
         modifier = Modifier.size(48.dp),
         shape = CircleShape,
-        color = if (isSelected) SimpleBlue else Color.White,
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0E0E0)),
-        contentColor = if (isSelected) Color.White else Color.Black
+        color = if (isSelected) SimpleBlue else if (isEnabled) Color.White else Color(0xFFF5F5F5),
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isEnabled) Color(0xFFE0E0E0) else Color(0xFFD0D0D0)
+        ),
+        contentColor = if (isSelected) Color.White else if (isEnabled) Color.Black else Color.Gray,
+        enabled = isEnabled
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(text = year.toString(), fontWeight = FontWeight.Bold)
@@ -339,7 +495,7 @@ fun RegisterScreenPreview() {
             onLastNameChange = {},
             onEmailChange = {},
             onStudentNumberChange = {},
-            onProgrammeChange = {},
+            onProgrammeChange = { _, _ -> },
             onYearOfStudyChange = {},
             onPasswordChange = {},
             onTogglePasswordVisibility = {},

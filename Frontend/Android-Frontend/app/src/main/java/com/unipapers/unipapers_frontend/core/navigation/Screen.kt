@@ -14,6 +14,9 @@ sealed class Screen(val route: String) {
     
     object Login : Screen("login")
     object Register : Screen("register")
+    object Verify : Screen("verify/{email}") {
+        fun createRoute(email: String) = "verify/$email"
+    }
     object Upload : Screen("upload")
 
     object PdfViewer : Screen("pdf_viewer/{url}") {

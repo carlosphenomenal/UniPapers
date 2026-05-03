@@ -43,7 +43,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.unipapers.unipapers_frontend.R
-import com.unipapers.unipapers_frontend.core.navigation.PlaceholderScreen
+import com.unipapers.unipapers_frontend.core.ui.components.PlaceholderScreen
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
 import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.core.ui.theme.GrayText

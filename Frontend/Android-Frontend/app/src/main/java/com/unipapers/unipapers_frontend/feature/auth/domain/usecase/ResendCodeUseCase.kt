@@ -5,10 +5,10 @@ import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupReque
 import com.unipapers.unipapers_frontend.feature.auth.domain.repository.AuthRepository
 import javax.inject.Inject
 
-class RegisterUseCase @Inject constructor(
+class ResendCodeUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
-    suspend operator fun invoke(signupRequestDto: SignupRequestDto): Resource<String> {
-        return repository.signup(signupRequestDto)
+    suspend operator fun invoke(email: String): Resource<String> {
+        return repository.resendVerificationCode(email)
     }
 }

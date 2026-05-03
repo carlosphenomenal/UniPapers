@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -27,28 +28,51 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 import com.unipapers.unipapers_frontend.core.ui.theme.UniPapersTheme
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun VerifyScreen(
     onVerifySuccess: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: VerifyViewModel = viewModel()
+    viewModel: VerifyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    VerifyContent(
-        state = state,
-        onCodeChange = viewModel::onCodeChange,
-        onResendCode = viewModel::onResendCode,
-        onNavigateBack = onNavigateBack
-    )
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is VerifyViewModel.UiEvent.Success -> {
+                    onVerifySuccess()
+                }
+                is VerifyViewModel.UiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        VerifyContent(
+            modifier = Modifier.padding(padding),
+            state = state,
+            onCodeChange = viewModel::onCodeChange,
+            onResendCode = viewModel::onResendCode,
+            onNavigateBack = onNavigateBack
+        )
+    }
 }
 
 @Composable
 fun VerifyContent(
+    modifier: Modifier = Modifier,
     state: VerifyState,
     onCodeChange: (String) -> Unit,
     onResendCode: () -> Unit,
@@ -61,7 +85,7 @@ fun VerifyContent(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF8F9FB))
             .verticalScroll(rememberScrollState())
@@ -118,7 +142,6 @@ fun VerifyContent(
             contentAlignment = Alignment.Center
         ) {
             // BasicTextField to handle input and pasting
-            // It fills the area of the digits but is invisible
             BasicTextField(
                 value = state.code,
                 onValueChange = {
@@ -130,7 +153,7 @@ fun VerifyContent(
                 modifier = Modifier
                     .focusRequester(focusRequester)
                     .matchParentSize()
-                    .alpha(0f), // Make it invisible but still interactive for pasting
+                    .alpha(0f), 
                 decorationBox = { it() }
             )
 
@@ -151,6 +174,15 @@ fun VerifyContent(
                     )
                 }
             }
+        }
+
+        if (state.error != null) {
+            Text(
+                text = state.error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(48.dp))

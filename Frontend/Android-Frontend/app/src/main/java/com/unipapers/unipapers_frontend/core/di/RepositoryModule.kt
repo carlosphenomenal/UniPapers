@@ -20,6 +20,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
+import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
+import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
+import com.unipapers.unipapers_frontend.feature.auth.data.repository.AuthRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.auth.data.repository.ProgramRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.auth.domain.repository.AuthRepository
+import com.unipapers.unipapers_frontend.feature.auth.domain.repository.ProgramRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -71,4 +78,24 @@ object RepositoryModule {
             gson = gson
         )
     }
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        api: AuthApiService,
+        prefs: AppPreferences,
+        gson: Gson
+    ): AuthRepository {
+        return AuthRepositoryImpl(api, prefs, gson)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProgramRepository(
+        api: ProgramApiService,
+        gson: Gson
+    ): ProgramRepository {
+        return ProgramRepositoryImpl(api, gson)
+    }
+
 }
