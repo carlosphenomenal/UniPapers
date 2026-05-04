@@ -56,16 +56,16 @@ class ProfileRepositoryImpl @Inject constructor(
 
     // ✅ Mapping DTO → Domain
     private fun UserDto.toDomain() = User(
-        id = id,
-        fullName = fullName,
-        email = email,
-        studentNumber = studentNumber,
-        programme = programme,
-        yearOfStudy = yearOfStudy,
-        currentSemester = currentSemester,
-        freeViewsRemaining = freeViewsRemaining,
-        hasUnlockedAccess = hasUnlockedAccess,
-        uploadCount = uploadCount,
-        downloadCount = downloadCount
+        id = id ?: email.orEmpty(),
+        fullName = fullName.orEmpty(),
+        email = email.orEmpty(),
+        studentNumber = studentNumber.orEmpty(),
+        programme = programme.orEmpty(),
+        yearOfStudy = yearOfStudy ?: 1,
+        currentSemester = semester ?: 1,
+        freeViewsRemaining = 0,
+        hasUnlockedAccess = false,
+        uploadCount = uploadedPastPapersCount ?: 0,
+        downloadCount = 0
     )
 }

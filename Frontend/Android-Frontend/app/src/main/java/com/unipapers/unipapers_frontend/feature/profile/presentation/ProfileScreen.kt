@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.profile.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,11 +12,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -44,16 +50,6 @@ import com.unipapers.unipapers_frontend.feature.profile.presentation.components.
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.MyUploadsSection
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ProfileStatsRow
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.SettingsSection
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.foundation.layout.Row
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,36 +117,61 @@ fun ProfileScreen(
                     ) {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         ) {
-                            Text(
-                                text = profile.user.fullName,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = profile.user.email,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "${profile.user.institution} · ID: ${profile.user.studentId}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = profile.fullName,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = profile.email,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = profile.programme,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 6.dp)
+                                )
+                                Text(
+                                    text = profile.studentNumber,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 6.dp)
+                                )
+                                Text(
+                                    text = "Year ${profile.yearOfStudy} · Semester ${profile.currentSemester}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
-                        ProfileStatsRow(stats = profile.stats)
+                        ProfileStatsRow(uploadCount = profile.uploadCount)
                         Spacer(modifier = Modifier.height(16.dp))
-                        MyUploadsSection(uploadCount = profile.stats.uploadedPastPapers)
+                        MyUploadsSection(uploadCount = profile.uploadCount)
                         Spacer(modifier = Modifier.height(16.dp))
                         SettingsSection(
                             onChangePassword = { viewModel.onShowChangePasswordModal() },
@@ -174,8 +195,8 @@ fun ProfileScreen(
 
     if (state.showYearSemesterSheet) {
         val sheetState = rememberModalBottomSheetState()
-        var selectedYear by remember { mutableIntStateOf(2) }
-        var selectedSemester by remember { mutableIntStateOf(1) }
+        var selectedYear by remember { mutableIntStateOf(state.profile?.yearOfStudy ?: 1) }
+        var selectedSemester by remember { mutableIntStateOf(state.profile?.currentSemester ?: 1) }
 
         ModalBottomSheet(
             onDismissRequest = { viewModel.onDismissYearSemesterSheet() },
@@ -242,12 +263,13 @@ fun ProfileScreen(
                 Button(
                     onClick = { viewModel.onUpdateYearSemester(selectedYear, selectedSemester) },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isUpdatingProfile,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Text(
-                        text = "Update",
+                        text = if (state.isUpdatingProfile) "Updating..." else "Update",
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }

@@ -1,6 +1,10 @@
 package com.unipapers.unipapers_frontend.feature.profile.presentation.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -9,15 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
-import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryOrange
-import com.unipapers.unipapers_frontend.feature.profile.domain.model.UserStats
 
 @Composable
-fun ProfileStatsRow(stats: UserStats) {
+fun ProfileStatsRow(uploadCount: Int) {
 
     Card(
         modifier = Modifier
@@ -25,7 +25,7 @@ fun ProfileStatsRow(stats: UserStats) {
             .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = PrimaryBlue
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
 
@@ -36,7 +36,7 @@ fun ProfileStatsRow(stats: UserStats) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
-            StatItem("Uploads", stats.uploadedPastPapers.toString())
+            StatItem("Uploads", uploadCount.toString())
 
         }
     }
@@ -51,14 +51,14 @@ private fun StatItem(label: String, value: String) {
 
         Text(
             text = value,
-            color = PrimaryOrange,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleLarge
         )
 
         Text(
             text = label,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             style = MaterialTheme.typography.labelSmall
         )
     }

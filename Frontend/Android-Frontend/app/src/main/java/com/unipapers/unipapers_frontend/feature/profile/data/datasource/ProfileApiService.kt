@@ -9,7 +9,7 @@ import retrofit2.http.PUT
 
 interface ProfileApiService {
 
-    @GET("users/me")
+    @GET("profile/get")
     suspend fun getProfile(): UserDto
 
     @PUT("users/me/profile")

@@ -1,10 +1,10 @@
 package com.unipapers.unipapers_frontend.feature.profile.presentation
 
-import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
+import com.unipapers.unipapers_frontend.core.domain.model.User
 
 data class ProfileState(
     val isLoading: Boolean = false,
-    val profile: ProfileResponse? = null,
+    val profile: User? = null,
     val error: String? = null,
     val isUpdatingProfile: Boolean = false,
     val isChangingPassword: Boolean = false,
