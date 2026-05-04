@@ -1,10 +1,6 @@
 package com.unipapers.unipapers_frontend.core.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -12,6 +8,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordEmailScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordResetScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordVerifyScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.login.LoginScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.register.RegisterScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.verify.VerifyScreen
 import com.unipapers.unipapers_frontend.feature.browse.presentation.BrowsePapersScreen
 import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
@@ -19,6 +21,7 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.scre
 import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.startup.StartupScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -30,9 +33,23 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = Screen.Startup.route,
         modifier = modifier
     ) {
+        composable(Screen.Startup.route) {
+            StartupScreen(
+                onAuthenticated = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Startup.route) { inclusive = true }
+                    }
+                },
+                onUnauthenticated = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Startup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen()
         }
@@ -89,15 +106,90 @@ fun NavGraph(
                 toastManager = toastManager
             )
         }
-    }
-}
-
-@Composable
-fun PlaceholderScreen(name: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = name)
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToForgotPassword = {
+                    navController.navigate(Screen.ForgotPasswordEmail.route)
+                },
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVerify = { email ->
+                    navController.navigate(Screen.Verify.createRoute(email, autoResend = false))
+                }
+            )
+        }
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = { email ->
+                    navController.navigate(Screen.Verify.createRoute(email))
+                }
+            )
+        }
+        composable(Screen.ForgotPasswordEmail.route) {
+            ForgotPasswordEmailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToVerify = { email ->
+                    navController.navigate(Screen.ForgotPasswordVerify.createRoute(email))
+                }
+            )
+        }
+        composable(
+            route = Screen.ForgotPasswordVerify.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) {
+            ForgotPasswordVerifyScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToReset = { email ->
+                    navController.navigate(Screen.ForgotPasswordReset.createRoute(email))
+                }
+            )
+        }
+        composable(
+            route = Screen.ForgotPasswordReset.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) {
+            ForgotPasswordResetScreen(
+                onNavigateBack = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    }
+                },
+                onPasswordReset = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(
+            route = Screen.Verify.route,
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("autoResend") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) {
+            VerifyScreen(
+                onVerifySuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }

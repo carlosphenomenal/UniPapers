@@ -59,7 +59,7 @@ public class SessionService {
             // The hash doesn't match any active session — token reuse detected.
             // Revoke ALL active sessions for this user to force re-login everywhere.
             log.warn("Refresh token reuse detected for user {}. Revoking all active sessions.", studentNumber);
-            revokeAllUserSessions(user.getId(), RevokedReason.TOKEN_REUSE);
+            revokeAllUserSessions(user, RevokedReason.TOKEN_REUSE);
             throw new InvalidRefreshTokenException("Refresh token has already been used. All sessions have been revoked for security. Please log in again.");
         }
 
@@ -88,7 +88,7 @@ public class SessionService {
         Map<String, Object> accessTokenClaims = buildAccessTokenClaims(user);
         String newAccessToken = jwtService.generateAccessToken(Long.toString(user.getStudentNumber()), accessTokenClaims);
 
-        log.info("Rotated refresh token for userId={}, sessionId={}", studentNumber, session.getPublicSessionId());
+        log.info("Rotated refresh token for user {}, sessionId={}", studentNumber, session.getPublicSessionId());
 
         return new LoginResponseDto(
                 user.getPublicId(),
@@ -135,8 +135,8 @@ public class SessionService {
      * Revokes all active (non-revoked) sessions for a given user.
      * Used when token reuse is detected to protect the user's account.
      */
-    private void revokeAllUserSessions(Long userId, RevokedReason reason) {
-        List<Session> activeSessions = sessionRepo.findByUserIdAndRevokedFalse(userId);
+    private void revokeAllUserSessions(User user, RevokedReason reason) {
+        List<Session> activeSessions = sessionRepo.findByUserIdAndRevokedFalse(user.getId());
         Instant now = Instant.now();
         activeSessions.forEach(s -> {
             s.setRevoked(true);
@@ -144,7 +144,7 @@ public class SessionService {
             s.setRevokedReason(reason);
         });
         sessionRepo.saveAll(activeSessions);
-        log.info("Revoked {} active session(s) for userId={} due to {}", activeSessions.size(), userId, reason);
+        log.info("Revoked {} active session(s) for user {} due to {}", activeSessions.size(), user.getStudentNumber(), reason);
     }
 
 

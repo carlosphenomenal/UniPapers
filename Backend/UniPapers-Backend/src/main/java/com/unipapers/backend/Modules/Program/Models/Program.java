@@ -1,4 +1,4 @@
-package com.unipapers.backend.Modules.FileManagement.Models;
+package com.unipapers.backend.Modules.Program.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Common.Models.User;

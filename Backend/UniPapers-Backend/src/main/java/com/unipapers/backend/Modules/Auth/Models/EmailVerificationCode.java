@@ -48,5 +48,9 @@ public class EmailVerificationCode {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
+        // Trim the code
+        if (code != null) {
+            code = code.trim();
+        }
     }
 }

@@ -2,9 +2,10 @@ package com.unipapers.backend.Common.Models;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Common.Enums.Role;
+import com.unipapers.backend.Modules.Auth.Models.EmailVerificationCode;
 import com.unipapers.backend.Modules.Auth.Models.Session;
 import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
-import com.unipapers.backend.Modules.FileManagement.Models.Program;
+import com.unipapers.backend.Modules.Program.Models.Program;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,7 +57,16 @@ public class User {
     @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(
+                    name = "user_id",
+                    foreignKey = @ForeignKey(
+                            name = "fk_user_roles_user_id",
+                            foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+                    )
+            )
+    )
     @Column(name = "role")
     private Set<Role> roles = Set.of(Role.USER);
 
@@ -66,6 +76,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Session> sessions;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<EmailVerificationCode> emailVerificationCodes;
+
     private Instant addedAt;
     private Instant updatedAt;
 
@@ -74,6 +87,16 @@ public class User {
         // Generate a public ID if not provided
         if (publicId == null) {
             publicId = UlidCreator.getUlid().toString();
+        }
+        // Trim string fields
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
+        if (firstName != null) {
+            firstName = firstName.trim();
+        }
+        if (lastName != null) {
+            lastName = lastName.trim();
         }
         // Validate semester
         if (semester != 1 && semester != 2) {

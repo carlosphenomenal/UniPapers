@@ -1,6 +1,6 @@
-package com.unipapers.backend.Modules.FileManagement.Repositories;
+package com.unipapers.backend.Modules.Program.Repositories;
 
-import com.unipapers.backend.Modules.FileManagement.Models.Program;
+import com.unipapers.backend.Modules.Program.Models.Program;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

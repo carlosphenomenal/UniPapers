@@ -14,6 +14,17 @@ sealed class Screen(val route: String) {
     
     object Login : Screen("login")
     object Register : Screen("register")
+    object Verify : Screen("verify/{email}?autoResend={autoResend}") {
+        fun createRoute(email: String, autoResend: Boolean = false) =
+            "verify/$email?autoResend=$autoResend"
+    }
+    object ForgotPasswordEmail : Screen("forgot_password_email")
+    object ForgotPasswordVerify : Screen("forgot_password_verify/{email}") {
+        fun createRoute(email: String) = "forgot_password_verify/$email"
+    }
+    object ForgotPasswordReset : Screen("forgot_password_reset/{email}") {
+        fun createRoute(email: String) = "forgot_password_reset/$email"
+    }
     object Upload : Screen("upload")
 
     object PdfViewer : Screen("pdf_viewer/{url}") {
@@ -22,4 +33,5 @@ sealed class Screen(val route: String) {
             return "pdf_viewer/$encodedUrl"
         }
     }
+    object Startup : Screen("startup")
 }

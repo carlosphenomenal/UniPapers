@@ -5,9 +5,11 @@ import com.unipapers.backend.Common.Models.User;
 import com.unipapers.backend.Common.Repositories.UserRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginResponseDto;
-import com.unipapers.backend.Modules.FileManagement.Models.Program;
-import com.unipapers.backend.Modules.FileManagement.Repositories.ProgramRepo;
+import com.unipapers.backend.Modules.Program.Models.Program;
+import com.unipapers.backend.Modules.Program.Repositories.ProgramRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
+import com.unipapers.backend.Modules.Auth.Dtos.UpdatePasswordRequestDto;
 import com.unipapers.backend.Utils.SemesterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.unipapers.backend.Modules.Auth.Models.EmailVerificationCode;
 import com.unipapers.backend.Modules.Auth.Models.Session;
 import com.unipapers.backend.Modules.Auth.Repositories.EmailVerificationCodeRepo;
@@ -50,10 +53,17 @@ public class AuthService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    @Transactional
     public Object signup(SignupRequestDto signupRequestDto) {
+        // Trim string inputs
+        final String firstName = signupRequestDto.getFirstName() != null ? signupRequestDto.getFirstName().trim() : null;
+        final String lastName = signupRequestDto.getLastName() != null ? signupRequestDto.getLastName().trim() : null;
+        final String email = signupRequestDto.getEmail().trim().toLowerCase();
+        final String password = signupRequestDto.getPassword().trim();
+
         // Check if a user with the same student number or email exists
-        if (userRepo.findByEmail(signupRequestDto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("User already exists with email: " + signupRequestDto.getEmail());
+        if (userRepo.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("User already exists with email: " + email);
         }
         if (userRepo.findByStudentNumber(signupRequestDto.getStudentNumber()).isPresent()) {
             throw new IllegalArgumentException("User already exists with student number: " + signupRequestDto.getStudentNumber());
@@ -69,11 +79,11 @@ public class AuthService {
 
         // Register the user in the db
         User user = User.builder()
-                .firstName(signupRequestDto.getFirstName())
-                .lastName(signupRequestDto.getLastName())
-                .email(signupRequestDto.getEmail())
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
                 .studentNumber(signupRequestDto.getStudentNumber())
-                .password(passwordEncoder.encode(signupRequestDto.getPassword()))
+                .password(passwordEncoder.encode(password))
                 .program(program)
                 .yearOfStudy(signupRequestDto.getYearOfStudy())
                 .semester(SemesterUtils.currentSemester())
@@ -89,69 +99,136 @@ public class AuthService {
         emailVerificationCodeRepo.save(codeRecord);
 
         // Send a code to the email
-        emailService.sendVerificationCode(signupRequestDto.getEmail(), verificationCode);
+        emailService.sendVerificationCode(email, verificationCode);
 
-        return "Verification code sent to " + signupRequestDto.getEmail();
+        return "Verification code sent to " + email;
     }
 
+    @Transactional
     public Object verifyEmail(String email, String verificationCode) {
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+        // Trim inputs
+        final String trimmedEmail = email.trim().toLowerCase();
+        final String trimmedCode = verificationCode.trim();
+
+        User user = userRepo.findByEmail(trimmedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + trimmedEmail));
 
         if (user.isEmailVerified()) {
-            return "Email already verified for " + email;
+            return "Email already verified for " + trimmedEmail;
         }
 
         Instant now = Instant.now();
         emailVerificationCodeRepo.deleteByUserAndExpiresAtBefore(user, now);
 
         EmailVerificationCode codeRecord = emailVerificationCodeRepo
-                .findTopByUserAndCodeOrderByCreatedAtDesc(user, verificationCode)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid verification code for " + email));
+                .findTopByUserAndCodeOrderByCreatedAtDesc(user, trimmedCode)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid verification code for " + trimmedEmail));
 
         if (codeRecord.getExpiresAt().isBefore(now)) {
             emailVerificationCodeRepo.delete(codeRecord);
-            throw new IllegalArgumentException("Verification code expired for " + email);
+            throw new IllegalArgumentException("Verification code expired for " + trimmedEmail);
         }
 
         user.setEmailVerified(true);
         userRepo.save(user);
         emailVerificationCodeRepo.delete(codeRecord);
 
-        return "Email verified for " + email;
+        return "Email verified for " + trimmedEmail;
     }
 
+    @Transactional
     public Object resendVerificationCode(String email) {
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+        // Trim email input
+        final String trimmedEmail = email.trim().toLowerCase();
+
+        User user = userRepo.findByEmail(trimmedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + trimmedEmail));
 
         if (user.isEmailVerified()) {
-            return "Email already verified for " + email;
+            return "Email already verified for " + trimmedEmail;
         }
 
         // Generate a new code
         String verificationCode = String.valueOf((int) (Math.random() * 900000) + 100000);
 
-        // Invalidate old codes
-        Instant now = Instant.now();
-        emailVerificationCodeRepo.deleteByUserAndExpiresAtBefore(user, now);
+        // Delete ALL old codes using a query that flushes immediately
+        emailVerificationCodeRepo.deleteAllByUserAndFlush(user);
 
         EmailVerificationCode codeRecord = EmailVerificationCode.builder()
                 .user(user)
                 .code(verificationCode)
-                .expiresAt(now.plusSeconds(verificationCodeExpiryMinutes * 60L))
+                .expiresAt(Instant.now().plusSeconds(verificationCodeExpiryMinutes * 60L))
                 .build();
         emailVerificationCodeRepo.save(codeRecord);
 
         // Send the new code to the email
-        emailService.sendVerificationCode(email, verificationCode);
+        emailService.sendVerificationCode(trimmedEmail, verificationCode);
 
-        return "New verification code sent to " + email;
+        return "New verification code sent to " + trimmedEmail;
     }
 
+    @Transactional
+    public SendCodeResponseDto sendVerificationCodeByIdentifier(String identifier) {
+        // Trim identifier input
+        final String trimmedIdentifier = identifier.trim().toLowerCase();
+
+        User user;
+        String userEmail;
+
+        // Try to find by email first
+        Optional<User> userByEmail = userRepo.findByEmail(trimmedIdentifier);
+        if (userByEmail.isPresent()) {
+            user = userByEmail.get();
+            userEmail = user.getEmail();
+        } else {
+            // Try to find by student number
+            try {
+                Long studentNumber = Long.parseLong(trimmedIdentifier);
+                Optional<User> userByStudentNumber = userRepo.findByStudentNumber(studentNumber);
+                if (userByStudentNumber.isPresent()) {
+                    user = userByStudentNumber.get();
+                    userEmail = user.getEmail();
+                } else {
+                    throw new IllegalArgumentException("User not found with email or student number: " + identifier);
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid identifier. Please provide a valid email or student number: " + identifier);
+            }
+        }
+
+        // Generate a new verification code
+        String verificationCode = String.valueOf((int) (Math.random() * 900000) + 100000);
+
+        // Delete all old codes for this user
+        emailVerificationCodeRepo.deleteAllByUserAndFlush(user);
+
+        // Create and save new verification code
+        EmailVerificationCode codeRecord = EmailVerificationCode.builder()
+                .user(user)
+                .code(verificationCode)
+                .expiresAt(Instant.now().plusSeconds(verificationCodeExpiryMinutes * 60L))
+                .build();
+        emailVerificationCodeRepo.save(codeRecord);
+
+        // Send the code to the user's email
+        emailService.sendVerificationCode(userEmail, verificationCode);
+
+        log.info("Verification code sent to user with identifier: {} (email: {})", identifier, userEmail);
+
+        return SendCodeResponseDto.builder()
+                .email(userEmail)
+                .message("Verification code sent to " + userEmail)
+                .build();
+    }
+
+    @Transactional
     public LoginResponseDto login(LoginRequestDto request){
+        // Trim identifier input
+        final String trimmedIdentifier = request.getIdentifier().trim();
+        final String trimmedPassword = request.getPassword().trim();
+
         // Store the credentials sent in the request in an Authentication object
-        Authentication authentication = new UsernamePasswordAuthenticationToken(request.getIdentifier(), request.getPassword());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(trimmedIdentifier, trimmedPassword);
 
         // Authenticate the credentials
         Authentication auth = authenticationManager.authenticate(authentication);
@@ -212,6 +289,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         String tokenHash = SessionService.hashToken(refreshToken);
         Optional<Session> sessionOpt = sessionRepo.findByRefreshTokenHashAndRevokedFalse(tokenHash);
@@ -230,6 +308,20 @@ public class AuthService {
         sessionRepo.save(session);
         log.info("User logged out. Session {} revoked for user {}.",
                 session.getPublicSessionId(), session.getUser().getStudentNumber());
+    }
+
+    @Transactional
+    public Object updatePassword(UpdatePasswordRequestDto request) {
+        final String email = request.getEmail().trim().toLowerCase();
+        final String newPassword = request.getNewPassword().trim();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
+
+        return "Password updated for " + email;
     }
 
     // ==================== HELPER METHODS ====================

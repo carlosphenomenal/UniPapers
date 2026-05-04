@@ -4,18 +4,19 @@ import com.unipapers.unipapers_frontend.BuildConfig
 
 object NetworkConfig {
     val BASE_URL: String by lazy {
-        BuildConfig::class.java.getField("BASE_URL").get(null) as String
+        BuildConfig.BASE_URL
     }
 
     /**
-     * Endpoints that require an Authorization header.
+     * Endpoints that do not require an Authorization header.
      * Add paths here (without the base URL) as you introduce protected routes.
-     *
-     * Example:
-     *   "users/profile",
-     *   "papers/delete/",
      */
-    val PROTECTED_ENDPOINTS: Set<String> = setOf(
-        // e.g. "users/me"
+    val PUBLIC_ENDPOINTS: Set<String> = setOf(
+        "auth/login",
+        "auth/signup",
+        "auth/verify-email",
+        "auth/resend-verification-code",
+        "auth/refresh",
+        "programs/get"
     )
 }

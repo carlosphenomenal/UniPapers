@@ -1,6 +1,11 @@
 package com.unipapers.backend.Configurations.Security;
 
+import com.unipapers.backend.Exceptions.SecurityFilterChainExceptions.ExpiredAccessTokenException;
 import com.unipapers.backend.Modules.Auth.Services.CustomUserDetailsService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,9 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,22 +48,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             studentNumber = jwtService.extractStudentNumber(token);
-        } catch (Exception ex) {
-            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException ex) {
+            authenticationEntryPoint.commence(request, response, new ExpiredAccessTokenException("Access token expired", ex));
+            return;
+        } catch (MalformedJwtException | UnsupportedJwtException | SignatureException | IllegalArgumentException ex) {
+            authenticationEntryPoint.commence(request, response, new BadCredentialsException("Invalid access token", ex));
             return;
         }
 
         if (studentNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(studentNumber);
-            if (jwtService.isTokenValid(userDetails, token)) {
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(studentNumber);
+                if (jwtService.isTokenValid(userDetails, token)) {
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
+            } catch (ExpiredJwtException ex) {
+                authenticationEntryPoint.commence(request, response, new ExpiredAccessTokenException("Access token expired", ex));
+                return;
+            } catch (Exception ex) {
+                authenticationEntryPoint.commence(request, response, new BadCredentialsException("Invalid access token", ex));
+                return;
             }
         }
 
         filterChain.doFilter(request, response);
     }
 }
-

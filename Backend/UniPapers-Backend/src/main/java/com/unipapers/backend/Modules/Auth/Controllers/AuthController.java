@@ -4,9 +4,13 @@ import com.unipapers.backend.Modules.Auth.Dtos.LoginRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginResponseDto;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.VerifyEmailRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
+import com.unipapers.backend.Modules.Auth.Dtos.UpdatePasswordRequestDto;
 import com.unipapers.backend.Modules.Auth.Services.AuthService;
 import com.unipapers.backend.Modules.Auth.Services.SessionService;
 import com.unipapers.backend.Utils.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,27 +27,33 @@ public class AuthController {
     private final SessionService sessionService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequestDto signupRequestDto){
-        return ResponseEntity.ok().body(authService.signup(signupRequestDto));
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequestDto signupRequestDto){
+        return ResponseEntity.ok().body(Map.of("message", authService.signup(signupRequestDto)));
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
+    public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyEmailRequestDto verifyEmailRequestDto){
         return ResponseEntity.ok().body(
-                authService.verifyEmail(
+                Map.of("message", authService.verifyEmail(
                         verifyEmailRequestDto.getEmail(),
                         verifyEmailRequestDto.getVerificationCode()
-                )
+                ))
         );
     }
 
     @PostMapping("/resend-verification-code")
-    public ResponseEntity<?> resendVerificationCode(@RequestBody SignupRequestDto signupRequestDto){
-        return ResponseEntity.ok().body(authService.resendVerificationCode(signupRequestDto.getEmail()));
+    public ResponseEntity<?> resendVerificationCode(@RequestParam("email") String email){
+        return ResponseEntity.ok().body(Map.of("message", authService.resendVerificationCode(email)));
+    }
+
+    @PostMapping("/send-code")
+    public ResponseEntity<?> sendCode(@Valid @RequestBody SendCodeRequestDto sendCodeRequestDto){
+        SendCodeResponseDto response = authService.sendVerificationCodeByIdentifier(sendCodeRequestDto.getIdentifier());
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto){
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto loginRequestDto){
         return ResponseEntity.ok().body(authService.login(loginRequestDto));
     }
 
@@ -67,4 +77,8 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody UpdatePasswordRequestDto updatePasswordRequestDto) {
+        return ResponseEntity.ok().body(Map.of("message", authService.updatePassword(updatePasswordRequestDto)));
+    }
 }

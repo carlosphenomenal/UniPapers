@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.feature.auth.domain.usecase.LogoutUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.GetProfileUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdateNotificationPrefsUseCase
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gson: Gson,
+    private val logoutUseCase: LogoutUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val updatePasswordUseCase: UpdatePasswordUseCase,
     private val updateNotificationPrefsUseCase: UpdateNotificationPrefsUseCase
@@ -132,7 +134,9 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onLogout(onLoggedOut: () -> Unit) {
-        // Clear session logic would go here
+        viewModelScope.launch {
+            logoutUseCase()
+        }
         onLoggedOut()
     }
 
