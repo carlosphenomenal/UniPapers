@@ -24,6 +24,11 @@ class TokenRefreshCoordinator @Inject constructor(
             return currentToken
         }
 
+        val refreshToken = prefs.getRefreshToken()
+        if (refreshToken.isNullOrBlank()) {
+            return null
+        }
+
         lock.withLock {
             if (refreshing) {
                 while (refreshing) {
@@ -35,21 +40,16 @@ class TokenRefreshCoordinator @Inject constructor(
         }
 
         val newToken = try {
-            val tokenToRefresh = expiredAccessToken ?: currentToken
-            if (tokenToRefresh.isNullOrBlank()) {
-                null
+            val response = runBlocking { authApiService.refresh(refreshToken) }
+            if (response.isSuccessful) {
+                response.body()?.also { body ->
+                    prefs.saveTokens(body.accessToken, body.refreshToken)
+                }?.accessToken
             } else {
-                val response = runBlocking { authApiService.refresh(tokenToRefresh) }
-                if (response.isSuccessful) {
-                    response.body()?.also { body ->
-                        prefs.saveTokens(body.accessToken, body.refreshToken)
-                    }?.accessToken
-                } else {
-                    if (response.code() == 401) {
-                        prefs.clearTokens()
-                    }
-                    null
+                if (response.code() == 401) {
+                    prefs.clearTokens()
                 }
+                null
             }
         } catch (_: Exception) {
             null
@@ -63,4 +63,3 @@ class TokenRefreshCoordinator @Inject constructor(
         return newToken
     }
 }
-

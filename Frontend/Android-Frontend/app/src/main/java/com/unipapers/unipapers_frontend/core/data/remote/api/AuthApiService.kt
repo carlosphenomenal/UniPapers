@@ -49,7 +49,7 @@ interface AuthApiService {
 
     @POST("auth/refresh")
     suspend fun refresh(
-        @Query("accessToken") accessToken: String
+        @Query("refreshToken") refreshToken: String
     ): Response<LoginResponseDto>
 
     @POST("auth/logout")
