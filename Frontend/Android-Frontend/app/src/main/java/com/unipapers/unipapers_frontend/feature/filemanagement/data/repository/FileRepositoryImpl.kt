@@ -95,7 +95,9 @@ class FileRepositoryImpl @Inject constructor(
             )
 
             if (!uploadResponse.isSuccessful) {
-                return Result.failure(Exception("Failed to upload file to bucket: ${uploadResponse.message()}"))
+                val errorBody = uploadResponse.errorBody()?.string()
+                val detail = if (!errorBody.isNullOrBlank()) " - $errorBody" else ""
+                return Result.failure(Exception("Failed to upload file to bucket: ${uploadResponse.code()}$detail"))
             }
 
             // Confirm that the upload was successful on the backend

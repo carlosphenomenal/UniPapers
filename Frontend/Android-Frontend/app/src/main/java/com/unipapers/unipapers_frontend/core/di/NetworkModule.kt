@@ -110,7 +110,30 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideCloudUploadApi(retrofit: Retrofit): CloudUploadApi {
+    @Named("cloud")
+    fun provideCloudUploadOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("cloud")
+    fun provideCloudUploadRetrofit(
+        @Named("cloud") okHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(NetworkConfig.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCloudUploadApi(@Named("cloud") retrofit: Retrofit): CloudUploadApi {
         return retrofit.create(CloudUploadApi::class.java)
     }
 
