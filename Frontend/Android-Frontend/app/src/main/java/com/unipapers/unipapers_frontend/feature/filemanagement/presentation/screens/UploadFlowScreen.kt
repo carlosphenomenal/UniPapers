@@ -49,6 +49,7 @@ import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.core.ui.theme.GrayText
 import com.unipapers.unipapers_frontend.core.ui.theme.NextButtonColor
 import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
+import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitViewModel
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.viewmodels.FileUploadViewModel
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.viewmodels.UploadStatus
 import com.unipapers.unipapers_frontend.feature.filemanagement.utils.PaperFileUtils
@@ -59,22 +60,16 @@ fun UploadFlowScreen(
     onBackClick: () -> Unit,
     toastManager: ToastManager,
     viewModel: FileUploadViewModel = hiltViewModel(),
+    courseViewModel: CourseUnitViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val uploadStatus by viewModel.status
+    val courseState by courseViewModel.state.collectAsState()
     
     var activeStep by remember { mutableIntStateOf(0) }
     
-    // Course options should mirror backend courses and carry the public ID used by upload DTOs.
-    val courses = remember {
-        listOf(
-            Course(publicId = "01JCSC1100000000000000001", courseCode = "CSC 1100"),
-            Course(publicId = "01JCSC1200000000000000002", courseCode = "CSC 1200"),
-            Course(publicId = "01JCSC2100000000000000003", courseCode = "CSC 2100"),
-            Course(publicId = "01JCSC2100000000000000004", courseCode = "CSC 2200")
-        )
-    }
+    val courses = courseState.courses
     val paperTypes = listOf("Exam", "Test")
     val academicYears = listOf("2024/2025", "2023/2024", "2022/2023", "2021/2022")
     val semesters = listOf("Semester 1", "Semester 2")
@@ -240,6 +235,8 @@ fun UploadFlowScreen(
                         )
                         1 -> DetailsScreen(
                             courses = courses,
+                            isLoadingCourses = courseState.isLoading,
+                            coursesError = courseState.error,
                             selectedCoursePublicId = uiState.selectedCoursePublicId,
                             onCourseSelected = viewModel::onCourseSelected,
                             paperType = uiState.selectedPaperType,

@@ -1,12 +1,24 @@
 package com.unipapers.unipapers_frontend.core.di
 
 import android.content.Context
-import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
+import com.google.gson.Gson
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
+import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
+import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
+import com.unipapers.unipapers_frontend.core.data.repository.CourseRepositoryImpl
+import com.unipapers.unipapers_frontend.core.domain.repository.CourseRepository
+import com.unipapers.unipapers_frontend.feature.auth.data.repository.AuthRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.auth.data.repository.ProgramRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.auth.domain.repository.AuthRepository
+import com.unipapers.unipapers_frontend.feature.auth.domain.repository.ProgramRepository
+import com.unipapers.unipapers_frontend.feature.browse.data.repository.BrowseRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.browse.domain.repository.BrowseRepository
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.local.DownloadDao
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.repository.FileRepositoryImpl
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
+import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
 import com.unipapers.unipapers_frontend.feature.home.data.repository.HomeRepositoryImpl
 import com.unipapers.unipapers_frontend.feature.home.domain.repository.HomeRepository
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
@@ -19,14 +31,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import com.google.gson.Gson
-import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
-import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
-import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
-import com.unipapers.unipapers_frontend.feature.auth.data.repository.AuthRepositoryImpl
-import com.unipapers.unipapers_frontend.feature.auth.data.repository.ProgramRepositoryImpl
-import com.unipapers.unipapers_frontend.feature.auth.domain.repository.AuthRepository
-import com.unipapers.unipapers_frontend.feature.auth.domain.repository.ProgramRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -58,11 +62,7 @@ object RepositoryModule {
         @ApplicationContext context: Context,
         gson: Gson
     ): ProfileRepository {
-        return ProfileRepositoryImpl(
-            remoteDataSource,
-            context,
-            gson
-        )
+        return ProfileRepositoryImpl(remoteDataSource, context, gson)
     }
 
     @Provides
@@ -72,11 +72,16 @@ object RepositoryModule {
         fileApi: FileApi,
         gson: Gson
     ): HomeRepository {
-        return HomeRepositoryImpl(
-            apiService = apiService,
-            fileApi = fileApi,
-            gson = gson
-        )
+        return HomeRepositoryImpl(apiService, fileApi, gson)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseRepository(
+        apiService: UniPapersApiService,
+        gson: Gson
+    ): CourseRepository {
+        return CourseRepositoryImpl(apiService, gson)
     }
 
     @Provides
@@ -98,4 +103,13 @@ object RepositoryModule {
         return ProgramRepositoryImpl(api, gson)
     }
 
+    @Provides
+    @Singleton
+    fun provideBrowseRepository(
+        apiService: UniPapersApiService,
+        fileApi: FileApi,
+        gson: Gson
+    ): BrowseRepository {
+        return BrowseRepositoryImpl(apiService, fileApi, gson)
+    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,10 +36,20 @@ fun BrowsePapersScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    LaunchedEffect(state.pendingPdfUrl) {
+        state.pendingPdfUrl?.let { url ->
+            onNavigateToPdf(url)
+            viewModel.consumePendingPdfUrl()
+        }
+    }
+
     BrowsePapersContent(
         state = state,
         onBackClick = onBackClick,
-        onPaperClick = onPaperClick,
+        onPaperClick = { paperId ->
+            onPaperClick(paperId)
+            viewModel.onPaperClicked(paperId)
+        },
         onTypeSelected = viewModel::onTypeSelected,
         onNavigateToPdf = onNavigateToPdf
     )
@@ -152,12 +163,7 @@ fun BrowsePapersContent(
                     items(filteredPapers) { paper ->
                         PaperListItem(
                             paper = paper,
-                            onClick = { 
-                                onPaperClick(paper.id)
-                                if (paper.url.isNotEmpty()) {
-                                    onNavigateToPdf(paper.url)
-                                }
-                            }
+                            onClick = { onPaperClick(paper.id) }
                         )
                     }
                 }

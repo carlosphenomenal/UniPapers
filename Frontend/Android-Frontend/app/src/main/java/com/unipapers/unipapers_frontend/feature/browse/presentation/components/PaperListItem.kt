@@ -90,63 +90,87 @@ fun PaperListItem(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Info Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                InfoItem(icon = Icons.Default.Description, text = paper.courseCode)
-                InfoItem(icon = Icons.Default.Groups, text = "Year ${paper.yearOfStudy}")
-                InfoItem(icon = Icons.Default.FileDownload, text = paper.downloadCount.toString())
-                InfoItem(icon = Icons.AutoMirrored.Filled.InsertDriveFile, text = "${paper.pageCount}p")
+            val infoItems = buildList {
+                add(Icons.Default.Description to paper.courseCode)
+                if (paper.yearOfStudy > 0) {
+                    add(Icons.Default.Groups to "Year ${paper.yearOfStudy}")
+                }
+                if (paper.downloadCount > 0) {
+                    add(Icons.Default.FileDownload to paper.downloadCount.toString())
+                }
+                if (paper.pageCount > 0) {
+                    add(Icons.AutoMirrored.Filled.InsertDriveFile to "${paper.pageCount}p")
+                }
+            }
+
+            if (infoItems.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    infoItems.forEach { (icon, text) ->
+                        InfoItem(icon = icon, text = text)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Tags
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                paper.tags.take(3).forEach { tag ->
-                    TagItem(text = tag)
-                }
-                if (paper.tags.size > 3) {
-                    TagItem(text = "+${paper.tags.size - 3}")
+            if (paper.tags.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    paper.tags.take(3).forEach { tag ->
+                        TagItem(text = tag)
+                    }
+                    if (paper.tags.size > 3) {
+                        TagItem(text = "+${paper.tags.size - 3}")
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
             
             // Divider
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
+            val showFooter = paper.uploaderName.isNotBlank() || paper.uploadDate.isNotBlank()
+            if (showFooter) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.LightGray.copy(alpha = 0.3f))
+                )
 
-            // Footer
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = buildString {
-                        append("by ")
-                        append(paper.uploaderName)
-                    },
-                    color = GrayText,
-                    fontSize = 13.sp
-                )
-                Text(
-                    text = paper.uploadDate,
-                    color = GrayText,
-                    fontSize = 13.sp
-                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (paper.uploaderName.isNotBlank()) {
+                        Text(
+                            text = buildString {
+                                append("by ")
+                                append(paper.uploaderName)
+                            },
+                            color = GrayText,
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
+                    if (paper.uploadDate.isNotBlank()) {
+                        Text(
+                            text = paper.uploadDate,
+                            color = GrayText,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
             }
         }
     }
