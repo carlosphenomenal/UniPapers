@@ -117,7 +117,7 @@ fun NavGraph(
                     }
                 },
                 onNavigateToVerify = { email ->
-                    navController.navigate(Screen.Verify.createRoute(email, autoResend = true))
+                    navController.navigate(Screen.Verify.createRoute(email, autoResend = false))
                 }
             )
         }

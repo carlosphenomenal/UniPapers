@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.domain.usecase.LoginUseCase
+import com.unipapers.unipapers_frontend.feature.auth.domain.usecase.SendCodeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val sendCodeUseCase: SendCodeUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -28,6 +30,7 @@ class LoginViewModel @Inject constructor(
         object Success : UiEvent()
         data class ShowSnackbar(val message: String) : UiEvent()
         data class UnverifiedAccount(val email: String, val message: String) : UiEvent()
+        data class NavigateToVerify(val email: String) : UiEvent()
     }
 
     fun onIdentifierChange(identifier: String) {
@@ -74,6 +77,26 @@ class LoginViewModel @Inject constructor(
                     } else {
                         _eventFlow.emit(UiEvent.ShowSnackbar(message))
                     }
+                }
+                is Resource.Loading -> {
+                    _state.update { it.copy(isLoading = true) }
+                }
+            }
+        }
+    }
+
+    fun onSendVerificationCode(identifier: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            val result = sendCodeUseCase(identifier.trim())
+            when (result) {
+                is Resource.Success -> {
+                    _state.update { it.copy(isLoading = false) }
+                    _eventFlow.emit(UiEvent.NavigateToVerify(result.data?.email ?: identifier))
+                }
+                is Resource.Error -> {
+                    _state.update { it.copy(isLoading = false) }
+                    _eventFlow.emit(UiEvent.ShowSnackbar(result.message ?: "Failed to send verification code"))
                 }
                 is Resource.Loading -> {
                     _state.update { it.copy(isLoading = true) }

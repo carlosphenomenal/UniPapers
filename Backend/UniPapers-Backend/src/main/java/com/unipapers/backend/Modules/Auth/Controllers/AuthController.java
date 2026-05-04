@@ -4,6 +4,8 @@ import com.unipapers.backend.Modules.Auth.Dtos.LoginRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginResponseDto;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.VerifyEmailRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
 import com.unipapers.backend.Modules.Auth.Services.AuthService;
 import com.unipapers.backend.Modules.Auth.Services.SessionService;
 import com.unipapers.backend.Utils.CustomUserDetails;
@@ -41,6 +43,12 @@ public class AuthController {
     @PostMapping("/resend-verification-code")
     public ResponseEntity<?> resendVerificationCode(@RequestParam("email") String email){
         return ResponseEntity.ok().body(Map.of("message", authService.resendVerificationCode(email)));
+    }
+
+    @PostMapping("/send-code")
+    public ResponseEntity<?> sendCode(@Valid @RequestBody SendCodeRequestDto sendCodeRequestDto){
+        SendCodeResponseDto response = authService.sendVerificationCodeByIdentifier(sendCodeRequestDto.getIdentifier());
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/login")

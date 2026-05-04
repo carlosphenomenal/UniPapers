@@ -7,6 +7,8 @@ import com.unipapers.unipapers_frontend.core.data.remote.util.ErrorParser
 import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginResponseDto
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SendCodeRequestDto
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SendCodeResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.VerifyEmailRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.domain.repository.AuthRepository
@@ -54,6 +56,21 @@ class AuthRepositoryImpl @Inject constructor(
             val response = api.resendVerificationCode(email)
             if (response.isSuccessful) {
                 response.body()?.let { Resource.Success(it.message) }
+                    ?: Resource.Error("Success but empty body")
+            } else {
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
+            }
+        } catch (_: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
+        }
+    }
+
+    override suspend fun sendCode(identifier: String): Resource<SendCodeResponseDto> {
+        return try {
+            val response = api.sendCode(SendCodeRequestDto(identifier.trim()))
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it) }
                     ?: Resource.Error("Success but empty body")
             } else {
                 val message = ErrorParser.parseErrorMessage(response, gson)

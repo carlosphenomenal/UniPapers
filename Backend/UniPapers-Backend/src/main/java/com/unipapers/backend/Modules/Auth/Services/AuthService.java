@@ -8,6 +8,7 @@ import com.unipapers.backend.Modules.Auth.Dtos.LoginResponseDto;
 import com.unipapers.backend.Modules.Program.Models.Program;
 import com.unipapers.backend.Modules.Program.Repositories.ProgramRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
+import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
 import com.unipapers.backend.Utils.SemesterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -163,6 +164,60 @@ public class AuthService {
         emailService.sendVerificationCode(trimmedEmail, verificationCode);
 
         return "New verification code sent to " + trimmedEmail;
+    }
+
+    @Transactional
+    public SendCodeResponseDto sendVerificationCodeByIdentifier(String identifier) {
+        // Trim identifier input
+        final String trimmedIdentifier = identifier.trim().toLowerCase();
+
+        User user;
+        String userEmail;
+
+        // Try to find by email first
+        Optional<User> userByEmail = userRepo.findByEmail(trimmedIdentifier);
+        if (userByEmail.isPresent()) {
+            user = userByEmail.get();
+            userEmail = user.getEmail();
+        } else {
+            // Try to find by student number
+            try {
+                Long studentNumber = Long.parseLong(trimmedIdentifier);
+                Optional<User> userByStudentNumber = userRepo.findByStudentNumber(studentNumber);
+                if (userByStudentNumber.isPresent()) {
+                    user = userByStudentNumber.get();
+                    userEmail = user.getEmail();
+                } else {
+                    throw new IllegalArgumentException("User not found with email or student number: " + identifier);
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid identifier. Please provide a valid email or student number: " + identifier);
+            }
+        }
+
+        // Generate a new verification code
+        String verificationCode = String.valueOf((int) (Math.random() * 900000) + 100000);
+
+        // Delete all old codes for this user
+        emailVerificationCodeRepo.deleteAllByUserAndFlush(user);
+
+        // Create and save new verification code
+        EmailVerificationCode codeRecord = EmailVerificationCode.builder()
+                .user(user)
+                .code(verificationCode)
+                .expiresAt(Instant.now().plusSeconds(verificationCodeExpiryMinutes * 60L))
+                .build();
+        emailVerificationCodeRepo.save(codeRecord);
+
+        // Send the code to the user's email
+        emailService.sendVerificationCode(userEmail, verificationCode);
+
+        log.info("Verification code sent to user with identifier: {} (email: {})", identifier, userEmail);
+
+        return SendCodeResponseDto.builder()
+                .email(userEmail)
+                .message("Verification code sent to " + userEmail)
+                .build();
     }
 
     @Transactional

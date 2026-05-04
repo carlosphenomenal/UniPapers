@@ -69,8 +69,12 @@ fun LoginScreen(
                         duration = SnackbarDuration.Long
                     )
                     if (result == SnackbarResult.ActionPerformed) {
-                        onNavigateToVerify(event.email)
+                        // Send verification code and navigate to verify screen
+                        viewModel.onSendVerificationCode(event.email)
                     }
+                }
+                is LoginViewModel.UiEvent.NavigateToVerify -> {
+                    onNavigateToVerify(event.email)
                 }
             }
         }

@@ -41,3 +41,13 @@ data class ProgramResponseDto(
     val programName: String,
     val durationYears: Int
 )
+
+data class SendCodeRequestDto(
+    val identifier: String
+)
+
+data class SendCodeResponseDto(
+    val email: String,
+    val message: String
+)
+
