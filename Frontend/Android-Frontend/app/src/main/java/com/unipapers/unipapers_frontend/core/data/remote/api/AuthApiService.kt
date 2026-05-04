@@ -6,6 +6,7 @@ import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRespon
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SendCodeRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SendCodeResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupRequestDto
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.UpdatePasswordRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.VerifyEmailRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -55,4 +56,9 @@ interface AuthApiService {
     suspend fun logout(
         @Query("refreshToken") refreshToken: String
     ): Response<Unit>
+
+    @POST("auth/update-password")
+    suspend fun updatePassword(
+        @Body updatePasswordRequestDto: UpdatePasswordRequestDto
+    ): Response<MessageResponseDto>
 }

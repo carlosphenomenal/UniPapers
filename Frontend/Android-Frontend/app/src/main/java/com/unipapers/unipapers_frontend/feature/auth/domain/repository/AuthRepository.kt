@@ -5,6 +5,7 @@ import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginReques
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SendCodeResponseDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.SignupRequestDto
+import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.UpdatePasswordRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.VerifyEmailRequestDto
 
 interface AuthRepository {
@@ -13,6 +14,7 @@ interface AuthRepository {
     suspend fun resendVerificationCode(email: String): Resource<String>
     suspend fun sendCode(identifier: String): Resource<SendCodeResponseDto>
     suspend fun login(loginRequestDto: LoginRequestDto): Resource<LoginResponseDto>
+    suspend fun updatePassword(updatePasswordRequestDto: UpdatePasswordRequestDto): Resource<String>
     suspend fun logout(): Resource<Unit>
     suspend fun authenticate(): Resource<Unit>
 }

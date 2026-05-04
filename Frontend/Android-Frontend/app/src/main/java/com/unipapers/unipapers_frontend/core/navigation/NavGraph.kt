@@ -8,6 +8,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.unipapers.unipapers_frontend.core.ui.components.ToastManager
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordEmailScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordResetScreen
+import com.unipapers.unipapers_frontend.feature.auth.presentation.forgot.ForgotPasswordVerifyScreen
 import com.unipapers.unipapers_frontend.feature.auth.presentation.login.LoginScreen
 import com.unipapers.unipapers_frontend.feature.auth.presentation.register.RegisterScreen
 import com.unipapers.unipapers_frontend.feature.auth.presentation.verify.VerifyScreen
@@ -109,7 +112,7 @@ fun NavGraph(
                     navController.navigate(Screen.Register.route)
                 },
                 onNavigateToForgotPassword = {
-                    // TODO: Implement forgot password
+                    navController.navigate(Screen.ForgotPasswordEmail.route)
                 },
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
@@ -128,6 +131,42 @@ fun NavGraph(
                 },
                 onRegisterSuccess = { email ->
                     navController.navigate(Screen.Verify.createRoute(email))
+                }
+            )
+        }
+        composable(Screen.ForgotPasswordEmail.route) {
+            ForgotPasswordEmailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToVerify = { email ->
+                    navController.navigate(Screen.ForgotPasswordVerify.createRoute(email))
+                }
+            )
+        }
+        composable(
+            route = Screen.ForgotPasswordVerify.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) {
+            ForgotPasswordVerifyScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToReset = { email ->
+                    navController.navigate(Screen.ForgotPasswordReset.createRoute(email))
+                }
+            )
+        }
+        composable(
+            route = Screen.ForgotPasswordReset.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) {
+            ForgotPasswordResetScreen(
+                onNavigateBack = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    }
+                },
+                onPasswordReset = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    }
                 }
             )
         }

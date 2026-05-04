@@ -51,3 +51,7 @@ data class SendCodeResponseDto(
     val message: String
 )
 
+data class UpdatePasswordRequestDto(
+    val email: String,
+    val newPassword: String
+)

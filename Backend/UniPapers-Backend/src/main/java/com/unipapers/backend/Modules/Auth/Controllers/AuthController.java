@@ -6,6 +6,7 @@ import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.VerifyEmailRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.SendCodeRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
+import com.unipapers.backend.Modules.Auth.Dtos.UpdatePasswordRequestDto;
 import com.unipapers.backend.Modules.Auth.Services.AuthService;
 import com.unipapers.backend.Modules.Auth.Services.SessionService;
 import com.unipapers.backend.Utils.CustomUserDetails;
@@ -76,4 +77,8 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody UpdatePasswordRequestDto updatePasswordRequestDto) {
+        return ResponseEntity.ok().body(Map.of("message", authService.updatePassword(updatePasswordRequestDto)));
+    }
 }

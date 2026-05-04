@@ -9,6 +9,7 @@ import com.unipapers.backend.Modules.Program.Models.Program;
 import com.unipapers.backend.Modules.Program.Repositories.ProgramRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.SendCodeResponseDto;
+import com.unipapers.backend.Modules.Auth.Dtos.UpdatePasswordRequestDto;
 import com.unipapers.backend.Utils.SemesterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -307,6 +308,20 @@ public class AuthService {
         sessionRepo.save(session);
         log.info("User logged out. Session {} revoked for user {}.",
                 session.getPublicSessionId(), session.getUser().getStudentNumber());
+    }
+
+    @Transactional
+    public Object updatePassword(UpdatePasswordRequestDto request) {
+        final String email = request.getEmail().trim().toLowerCase();
+        final String newPassword = request.getNewPassword().trim();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
+
+        return "Password updated for " + email;
     }
 
     // ==================== HELPER METHODS ====================
