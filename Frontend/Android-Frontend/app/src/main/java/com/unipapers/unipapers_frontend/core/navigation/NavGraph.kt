@@ -115,6 +115,9 @@ fun NavGraph(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToVerify = { email ->
+                    navController.navigate(Screen.Verify.createRoute(email, autoResend = true))
                 }
             )
         }
@@ -130,7 +133,13 @@ fun NavGraph(
         }
         composable(
             route = Screen.Verify.route,
-            arguments = listOf(navArgument("email") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("autoResend") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
         ) {
             VerifyScreen(
                 onVerifySuccess = {

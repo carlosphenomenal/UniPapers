@@ -40,6 +40,10 @@ class VerifyViewModel @Inject constructor(
         email = savedStateHandle.get<String>("email") ?: ""
         _state.update { it.copy(email = email) }
         startResendTimer()
+        val shouldAutoResend = savedStateHandle.get<Boolean>("autoResend") ?: false
+        if (shouldAutoResend) {
+            onResendCode(force = true)
+        }
     }
 
     sealed class UiEvent {
@@ -56,8 +60,8 @@ class VerifyViewModel @Inject constructor(
         }
     }
 
-    fun onResendCode() {
-        if (_state.value.canResend) {
+    fun onResendCode(force: Boolean = false) {
+        if (_state.value.canResend || force) {
             viewModelScope.launch {
                 // Backend expects SignupRequestDto for resend-verification-code even if only email is used
                 val signupDto = SignupRequestDto(

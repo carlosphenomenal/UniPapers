@@ -27,6 +27,7 @@ class LoginViewModel @Inject constructor(
     sealed class UiEvent {
         object Success : UiEvent()
         data class ShowSnackbar(val message: String) : UiEvent()
+        data class UnverifiedAccount(val email: String, val message: String) : UiEvent()
     }
 
     fun onIdentifierChange(identifier: String) {
@@ -56,16 +57,35 @@ class LoginViewModel @Inject constructor(
                     _eventFlow.emit(UiEvent.Success)
                 }
                 is Resource.Error -> {
-                    _state.update { it.copy(
-                        isLoading = false,
-                        error = result.message
-                    ) }
-                    _eventFlow.emit(UiEvent.ShowSnackbar(result.message ?: "An unknown error occurred"))
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = result.message
+                        )
+                    }
+                    val message = result.message ?: "An unknown error occurred"
+                    if (isUnverifiedMessage(message)) {
+                        _eventFlow.emit(
+                            UiEvent.UnverifiedAccount(
+                                email = _state.value.identifier,
+                                message = message
+                            )
+                        )
+                    } else {
+                        _eventFlow.emit(UiEvent.ShowSnackbar(message))
+                    }
                 }
                 is Resource.Loading -> {
                     _state.update { it.copy(isLoading = true) }
                 }
             }
         }
+    }
+
+    private fun isUnverifiedMessage(message: String): Boolean {
+        val normalized = message.lowercase()
+        return normalized.contains("not verified") ||
+            normalized.contains("verify your email") ||
+            normalized.contains("account is disabled")
     }
 }

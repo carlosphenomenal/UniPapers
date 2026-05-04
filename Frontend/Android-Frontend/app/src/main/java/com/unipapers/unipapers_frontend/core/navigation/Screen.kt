@@ -14,8 +14,9 @@ sealed class Screen(val route: String) {
     
     object Login : Screen("login")
     object Register : Screen("register")
-    object Verify : Screen("verify/{email}") {
-        fun createRoute(email: String) = "verify/$email"
+    object Verify : Screen("verify/{email}?autoResend={autoResend}") {
+        fun createRoute(email: String, autoResend: Boolean = false) =
+            "verify/$email?autoResend=$autoResend"
     }
     object Upload : Screen("upload")
 

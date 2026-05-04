@@ -83,7 +83,7 @@ fun VerifyScreen(
             modifier = Modifier.padding(padding),
             state = state,
             onCodeChange = viewModel::onCodeChange,
-            onResendCode = viewModel::onResendCode,
+            onResendCode = { viewModel.onResendCode() },
             onNavigateBack = onNavigateBack
         )
     }

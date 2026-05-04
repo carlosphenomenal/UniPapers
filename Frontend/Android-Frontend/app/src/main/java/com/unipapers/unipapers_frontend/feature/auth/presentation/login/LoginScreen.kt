@@ -45,6 +45,7 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onLoginSuccess: () -> Unit,
+    onNavigateToVerify: (String) -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -60,6 +61,16 @@ fun LoginScreen(
                     snackbarHostState.showSnackbar(
                         message = event.message
                     )
+                }
+                is LoginViewModel.UiEvent.UnverifiedAccount -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = "Verify",
+                        duration = SnackbarDuration.Long
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        onNavigateToVerify(event.email)
+                    }
                 }
             }
         }
