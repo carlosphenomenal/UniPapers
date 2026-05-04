@@ -19,6 +19,10 @@ class TokenAuthenticator @Inject constructor(
             return null
         }
 
+        if (!isExpiredTokenResponse(response)) {
+            return null
+        }
+
         val currentToken = prefs.getAccessToken()
         val requestToken = response.request.header("Authorization")
             ?.removePrefix("Bearer ")
@@ -38,6 +42,23 @@ class TokenAuthenticator @Inject constructor(
             .build()
     }
 
+    private fun isExpiredTokenResponse(response: Response): Boolean {
+        val expiredHeader = response.header("X-Auth-Error")?.trim()?.lowercase()
+        if (expiredHeader == "token_expired") {
+            return true
+        }
+
+        val wwwAuthenticate = response.header("WWW-Authenticate")?.lowercase()
+        if (wwwAuthenticate != null &&
+            wwwAuthenticate.contains("invalid_token") &&
+            wwwAuthenticate.contains("access token expired")
+        ) {
+            return true
+        }
+
+        return false
+    }
+
     private fun responseCount(response: Response): Int {
         var count = 1
         var priorResponse = response.priorResponse
@@ -48,4 +69,3 @@ class TokenAuthenticator @Inject constructor(
         return count
     }
 }
-
