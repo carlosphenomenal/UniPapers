@@ -50,8 +50,8 @@ class LoginViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true) }
             val result = loginUseCase(
                 LoginRequestDto(
-                    identifier = _state.value.identifier,
-                    password = _state.value.password
+                    identifier = _state.value.identifier.trim(),
+                    password = _state.value.password.trim()
                 )
             )
             when (result) {

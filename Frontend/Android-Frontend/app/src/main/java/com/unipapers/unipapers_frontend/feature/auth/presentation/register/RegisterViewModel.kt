@@ -119,43 +119,43 @@ class RegisterViewModel @Inject constructor(
         _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }
 
-     fun onSignUp() {
-         viewModelScope.launch {
-             val currentState = _state.value
-             if (currentState.firstName.isBlank() || currentState.lastName.isBlank() ||
-                 currentState.email.isBlank() || currentState.password.isBlank() ||
-                 currentState.studentNumber.isBlank() || currentState.programmeId.isBlank()) {
-                 _eventFlow.emit(UiEvent.ShowSnackbar("Please fill all fields"))
-                 return@launch
-             }
+      fun onSignUp() {
+          viewModelScope.launch {
+              val currentState = _state.value
+              if (currentState.firstName.isBlank() || currentState.lastName.isBlank() ||
+                  currentState.email.isBlank() || currentState.password.isBlank() ||
+                  currentState.studentNumber.isBlank() || currentState.programmeId.isBlank()) {
+                  _eventFlow.emit(UiEvent.ShowSnackbar("Please fill all fields"))
+                  return@launch
+              }
 
-             val studentNumberTrimmed = currentState.studentNumber.trim()
-             val studentNum = studentNumberTrimmed.toLongOrNull()
-             if (studentNum == null) {
-                 _eventFlow.emit(UiEvent.ShowSnackbar("Invalid student number"))
-                 return@launch
-             }
+              val studentNumberTrimmed = currentState.studentNumber.trim()
+              val studentNum = studentNumberTrimmed.toLongOrNull()
+              if (studentNum == null) {
+                  _eventFlow.emit(UiEvent.ShowSnackbar("Invalid student number"))
+                  return@launch
+              }
 
-             // Validate year of study against program duration
-             val selectedProgram = currentState.programs.find { it.publicId == currentState.programmeId }
-             if (selectedProgram != null && currentState.yearOfStudy > selectedProgram.durationYears) {
-                 _state.update { it.copy(error = "Year of study cannot exceed program duration (${selectedProgram.durationYears} years)") }
-                 _eventFlow.emit(UiEvent.ShowSnackbar("Invalid year of study for selected program"))
-                 return@launch
-             }
+              // Validate year of study against program duration
+              val selectedProgram = currentState.programs.find { it.publicId == currentState.programmeId }
+              if (selectedProgram != null && currentState.yearOfStudy > selectedProgram.durationYears) {
+                  _state.update { it.copy(error = "Year of study cannot exceed program duration (${selectedProgram.durationYears} years)") }
+                  _eventFlow.emit(UiEvent.ShowSnackbar("Invalid year of study for selected program"))
+                  return@launch
+              }
 
-             _state.update { it.copy(isLoading = true) }
-             val result = registerUseCase(
-                 SignupRequestDto(
-                     firstName = currentState.firstName,
-                     lastName = currentState.lastName,
-                     email = currentState.email,
-                     studentNumber = studentNum,
-                     password = currentState.password,
-                     programmePublicId = currentState.programmeId, // Use the ID
-                     yearOfStudy = currentState.yearOfStudy
-                 )
-             )
+              _state.update { it.copy(isLoading = true) }
+              val result = registerUseCase(
+                  SignupRequestDto(
+                      firstName = currentState.firstName.trim(),
+                      lastName = currentState.lastName.trim(),
+                      email = currentState.email.trim(),
+                      studentNumber = studentNum,
+                      password = currentState.password.trim(),
+                      programmePublicId = currentState.programmeId, // Use the ID
+                      yearOfStudy = currentState.yearOfStudy
+                  )
+              )
 
              when (result) {
                  is Resource.Success -> {
