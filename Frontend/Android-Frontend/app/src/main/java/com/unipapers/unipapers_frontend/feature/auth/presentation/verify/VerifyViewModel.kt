@@ -102,6 +102,7 @@ class VerifyViewModel @Inject constructor(
             )
             when (result) {
                 is Resource.Success -> {
+                    _state.update { it.copy(isLoading = false) }
                     _eventFlow.emit(UiEvent.Success)
                 }
                 is Resource.Error -> {

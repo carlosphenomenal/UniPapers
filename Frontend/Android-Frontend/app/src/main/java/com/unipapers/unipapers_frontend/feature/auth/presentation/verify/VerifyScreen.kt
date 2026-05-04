@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -65,6 +66,9 @@ fun VerifyScreen(
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
                 is VerifyViewModel.UiEvent.Success -> {
+                    snackbarHostState.showSnackbar(
+                        message = "Email verified successfully"
+                    )
                     onVerifySuccess()
                 }
                 is VerifyViewModel.UiEvent.ShowSnackbar -> {
@@ -76,15 +80,23 @@ fun VerifyScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        VerifyContent(
-            modifier = Modifier.padding(padding),
-            state = state,
-            onCodeChange = viewModel::onCodeChange,
-            onResendCode = { viewModel.onResendCode() },
-            onNavigateBack = onNavigateBack
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold { padding ->
+            VerifyContent(
+                modifier = Modifier.padding(padding),
+                state = state,
+                onCodeChange = viewModel::onCodeChange,
+                onResendCode = { viewModel.onResendCode() },
+                onNavigateBack = onNavigateBack
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 16.dp)
         )
     }
 }
