@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
-import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ChangePasswordModal
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.MyUploadsSection
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.ProfileStatsRow
 import com.unipapers.unipapers_frontend.feature.profile.presentation.components.SettingsSection
@@ -63,6 +62,8 @@ import com.unipapers.unipapers_frontend.feature.profile.presentation.components.
 @Composable
 fun ProfileScreen(
     onNavigateToLogin: () -> Unit,
+    onNavigateToUpload: () -> Unit,
+    onNavigateToForgotPassword: (String) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -235,12 +236,12 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         MyUploadsSection(
                             uploadCount = profile.uploadCount,
-                            onUploadClick = { /* Handle navigate to upload */ }
+                            onUploadClick = onNavigateToUpload
                         )
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         SettingsSection(
-                            onChangePassword = { viewModel.onShowChangePasswordModal() },
+                            onChangePassword = { onNavigateToForgotPassword(profile.email) },
                             onUpdateYearSemester = { viewModel.onShowYearSemesterSheet() },
                             onLogout = { showLogoutDialog = true }
                         )
@@ -259,15 +260,6 @@ fun ProfileScreen(
                 }
             }
         }
-    }
-
-    if (state.showChangePasswordModal) {
-        ChangePasswordModal(
-            isLoading = state.isChangingPassword,
-            errorMessage = state.passwordChangeError,
-            onDismiss = { viewModel.onDismissChangePasswordModal() },
-            onConfirm = { current, new -> viewModel.onChangePassword(current, new) }
-        )
     }
 
     if (state.showYearSemesterSheet) {

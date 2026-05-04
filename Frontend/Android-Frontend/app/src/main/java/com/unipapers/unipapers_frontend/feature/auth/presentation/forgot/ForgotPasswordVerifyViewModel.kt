@@ -32,6 +32,7 @@ class ForgotPasswordVerifyViewModel @Inject constructor(
 
     private var timerJob: Job? = null
     private val email: String = savedStateHandle.get<String>("email").orEmpty()
+    private val autoSend: Boolean = savedStateHandle.get<Boolean>("autoSend") ?: false
 
     sealed class UiEvent {
         data class NavigateToReset(val email: String) : UiEvent()
@@ -41,6 +42,26 @@ class ForgotPasswordVerifyViewModel @Inject constructor(
     init {
         _state.update { it.copy(email = email) }
         startResendTimer()
+        if (autoSend && email.isNotBlank()) {
+            sendInitialCode()
+        }
+    }
+
+    private fun sendInitialCode() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+            when (val result = sendCodeUseCase(email)) {
+                is Resource.Success -> {
+                    _state.update { it.copy(isLoading = false, resendTimer = 30, canResend = false) }
+                    startResendTimer()
+                }
+                is Resource.Error -> {
+                    _state.update { it.copy(isLoading = false, canResend = true) }
+                    _eventFlow.emit(UiEvent.ShowSnackbar(result.message ?: "Failed to send code"))
+                }
+                is Resource.Loading -> {}
+            }
+        }
     }
 
     fun onCodeChange(code: String) {
@@ -105,4 +126,3 @@ class ForgotPasswordVerifyViewModel @Inject constructor(
         timerJob?.cancel()
     }
 }
-

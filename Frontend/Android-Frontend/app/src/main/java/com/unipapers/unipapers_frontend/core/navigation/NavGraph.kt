@@ -97,6 +97,18 @@ fun NavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToUpload = {
+                    navController.navigate(Screen.Upload.route)
+                },
+                onNavigateToForgotPassword = { email ->
+                    navController.navigate(
+                        Screen.ForgotPasswordVerify.createRoute(
+                            email = email,
+                            autoSend = true,
+                            fromProfile = true
+                        )
+                    )
                 }
             )
         }
@@ -144,30 +156,64 @@ fun NavGraph(
         }
         composable(
             route = Screen.ForgotPasswordVerify.route,
-            arguments = listOf(navArgument("email") { type = NavType.StringType })
-        ) {
-            ForgotPasswordVerifyScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToReset = { email ->
-                    navController.navigate(Screen.ForgotPasswordReset.createRoute(email))
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("autoSend") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+                navArgument("fromProfile") {
+                    type = NavType.BoolType
+                    defaultValue = false
                 }
+            )
+        ) { backStackEntry ->
+            val fromProfile = backStackEntry.arguments?.getBoolean("fromProfile") ?: false
+            ForgotPasswordVerifyScreen(
+                onNavigateBack = {
+                    if (fromProfile) {
+                        navController.popBackStack(Screen.Profile.route, false)
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                onNavigateToReset = { email ->
+                    navController.navigate(Screen.ForgotPasswordReset.createRoute(email, fromProfile))
+                },
+                isFromProfile = fromProfile
             )
         }
         composable(
             route = Screen.ForgotPasswordReset.route,
-            arguments = listOf(navArgument("email") { type = NavType.StringType })
-        ) {
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("fromProfile") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val fromProfile = backStackEntry.arguments?.getBoolean("fromProfile") ?: false
             ForgotPasswordResetScreen(
                 onNavigateBack = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    if (fromProfile) {
+                        navController.popBackStack(Screen.Profile.route, false)
+                    } else {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                        }
                     }
                 },
                 onPasswordReset = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                    if (fromProfile) {
+                        navController.popBackStack(Screen.Profile.route, false)
+                    } else {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.ForgotPasswordEmail.route) { inclusive = true }
+                        }
                     }
-                }
+                },
+                isFromProfile = fromProfile
             )
         }
         composable(

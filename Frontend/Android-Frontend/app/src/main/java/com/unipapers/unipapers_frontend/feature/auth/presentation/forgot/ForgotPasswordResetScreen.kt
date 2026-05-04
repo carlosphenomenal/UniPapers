@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun ForgotPasswordResetScreen(
     onNavigateBack: () -> Unit,
     onPasswordReset: () -> Unit,
+    isFromProfile: Boolean,
     viewModel: ForgotPasswordResetViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -83,7 +84,8 @@ fun ForgotPasswordResetScreen(
             onTogglePasswordVisibility = viewModel::onTogglePasswordVisibility,
             onToggleConfirmPasswordVisibility = viewModel::onToggleConfirmPasswordVisibility,
             onResetPassword = viewModel::onResetPassword,
-            onNavigateBack = onNavigateBack
+            onNavigateBack = onNavigateBack,
+            backLabel = if (isFromProfile) "Back to profile" else "Back to sign in"
         )
     }
 }
@@ -98,7 +100,8 @@ fun ForgotPasswordResetContent(
     onTogglePasswordVisibility: () -> Unit,
     onToggleConfirmPasswordVisibility: () -> Unit,
     onResetPassword: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    backLabel: String
 ) {
     Column(
         modifier = modifier
@@ -245,7 +248,7 @@ fun ForgotPasswordResetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = onNavigateBack) {
-            Text(text = "Back to sign in", color = Color.Gray)
+            Text(text = backLabel, color = Color.Gray)
         }
     }
 }
@@ -261,7 +264,8 @@ fun ForgotPasswordResetPreview() {
             onTogglePasswordVisibility = {},
             onToggleConfirmPasswordVisibility = {},
             onResetPassword = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            backLabel = "Back to sign in"
         )
     }
 }

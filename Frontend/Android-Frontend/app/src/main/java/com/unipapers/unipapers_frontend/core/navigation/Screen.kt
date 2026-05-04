@@ -19,11 +19,13 @@ sealed class Screen(val route: String) {
             "verify/$email?autoResend=$autoResend"
     }
     object ForgotPasswordEmail : Screen("forgot_password_email")
-    object ForgotPasswordVerify : Screen("forgot_password_verify/{email}") {
-        fun createRoute(email: String) = "forgot_password_verify/$email"
+    object ForgotPasswordVerify : Screen("forgot_password_verify/{email}?autoSend={autoSend}&fromProfile={fromProfile}") {
+        fun createRoute(email: String, autoSend: Boolean = false, fromProfile: Boolean = false) =
+            "forgot_password_verify/$email?autoSend=$autoSend&fromProfile=$fromProfile"
     }
-    object ForgotPasswordReset : Screen("forgot_password_reset/{email}") {
-        fun createRoute(email: String) = "forgot_password_reset/$email"
+    object ForgotPasswordReset : Screen("forgot_password_reset/{email}?fromProfile={fromProfile}") {
+        fun createRoute(email: String, fromProfile: Boolean = false) =
+            "forgot_password_reset/$email?fromProfile=$fromProfile"
     }
     object Upload : Screen("upload")
 

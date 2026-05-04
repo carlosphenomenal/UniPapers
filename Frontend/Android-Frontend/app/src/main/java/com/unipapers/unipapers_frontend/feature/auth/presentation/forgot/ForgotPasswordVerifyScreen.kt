@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun ForgotPasswordVerifyScreen(
     onNavigateBack: () -> Unit,
     onNavigateToReset: (String) -> Unit,
+    isFromProfile: Boolean,
     viewModel: ForgotPasswordVerifyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -80,7 +81,8 @@ fun ForgotPasswordVerifyScreen(
             state = state,
             onCodeChange = viewModel::onCodeChange,
             onResendCode = viewModel::onResendCode,
-            onNavigateBack = onNavigateBack
+            onNavigateBack = onNavigateBack,
+            backLabel = if (isFromProfile) "Back to profile" else "Back to email"
         )
     }
 }
@@ -91,7 +93,8 @@ fun ForgotPasswordVerifyContent(
     state: ForgotPasswordVerifyState,
     onCodeChange: (String) -> Unit,
     onResendCode: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    backLabel: String
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -213,7 +216,7 @@ fun ForgotPasswordVerifyContent(
 
         TextButton(onClick = onNavigateBack) {
             Text(
-                text = "Back to email",
+                text = backLabel,
                 color = Color.Gray,
                 fontSize = 14.sp
             )
@@ -254,8 +257,8 @@ fun ForgotPasswordVerifyPreview() {
             state = ForgotPasswordVerifyState(email = "carlos@student.mak.ac.ug"),
             onCodeChange = {},
             onResendCode = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            backLabel = "Back to email"
         )
     }
 }
-
