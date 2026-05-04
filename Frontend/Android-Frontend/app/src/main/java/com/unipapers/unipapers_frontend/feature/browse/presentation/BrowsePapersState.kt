@@ -10,5 +10,7 @@ data class BrowsePapersState(
     val selectedType: PaperType = PaperType.EXAM,
     val papers: List<Paper> = emptyList(),
     val isLoading: Boolean = false,
+    val isOpeningPdf: Boolean = false,
+    val pendingPdfUrl: String? = null,
     val error: String? = null
 )

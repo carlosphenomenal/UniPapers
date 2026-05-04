@@ -9,9 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -26,6 +26,8 @@ import com.unipapers.unipapers_frontend.core.domain.model.Course
 @Composable
 fun DetailsScreen(
     courses: List<Course>,
+    isLoadingCourses: Boolean,
+    coursesError: String?,
     selectedCoursePublicId: String,
     onCourseSelected: (Course) -> Unit,
     paperType: String,
@@ -64,6 +66,8 @@ fun DetailsScreen(
         CourseDetailSection(
             title = "Course Unit",
             items = courses,
+            isLoading = isLoadingCourses,
+            error = coursesError,
             selectedCoursePublicId = selectedCoursePublicId,
             onCourseSelected = onCourseSelected
         )
@@ -108,13 +112,19 @@ fun DetailsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseDetailSection(
     title: String,
     items: List<Course>,
+    isLoading: Boolean,
+    error: String?,
     selectedCoursePublicId: String,
     onCourseSelected: (Course) -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedCourse = items.find { it.publicId == selectedCoursePublicId }
+
     Column {
         Text(
             text = title,
@@ -124,16 +134,92 @@ fun CourseDetailSection(
             )
         )
         Spacer(modifier = Modifier.height(12.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(end = 24.dp)
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            items(items) { item ->
-                SelectionChip(
-                    text = item.courseCode,
-                    isSelected = selectedCoursePublicId == item.publicId,
-                    onClick = { onCourseSelected(item) }
-                )
+            OutlinedTextField(
+                value = when {
+                    isLoading && items.isEmpty() -> "Loading courses..."
+                    error != null && items.isEmpty() -> "Error loading courses"
+                    selectedCourse != null -> "${selectedCourse.courseCode} - ${selectedCourse.courseName}"
+                    else -> "Select Course Unit"
+                },
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { 
+                    if (isLoading && items.isEmpty()) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlue
+                        )
+                    } else {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    }
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = PrimaryBlue,
+                    unfocusedBorderColor = Gray
+                ),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                textStyle = MaterialTheme.typography.bodyMedium
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White)
+            ) {
+                if (isLoading && items.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Loading courses...", color = GrayText) },
+                        onClick = {},
+                        enabled = false
+                    )
+                } else if (error != null && items.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Error: $error", color = Color.Red) },
+                        onClick = {},
+                        enabled = false
+                    )
+                } else if (items.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("No courses available", color = GrayText) },
+                        onClick = {},
+                        enabled = false
+                    )
+                } else {
+                    items.forEach { item ->
+                        DropdownMenuItem(
+                            text = {
+                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    Text(
+                                        text = item.courseCode,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
+                                    )
+                                    Text(
+                                        text = item.courseName,
+                                        style = MaterialTheme.typography.bodySmall.copy(color = GrayText)
+                                    )
+                                }
+                            },
+                            onClick = {
+                                onCourseSelected(item)
+                                expanded = false
+                            },
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -203,6 +289,8 @@ fun SelectionChip(
 fun DetailsScreenPreview() {
     DetailsScreen(
         courses = listOf(Course(publicId = "course-1", courseCode = "CSC 1100", courseName = "Computer Science")),
+        isLoadingCourses = false,
+        coursesError = null,
         selectedCoursePublicId = "",
         onCourseSelected = {},
         paperType = "",

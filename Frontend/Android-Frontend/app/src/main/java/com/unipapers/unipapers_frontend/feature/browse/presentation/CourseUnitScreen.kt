@@ -107,10 +107,11 @@ fun CourseUnitScreen(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(state.courses) { course ->
+            val visibleCourses = state.courses.filter { it.paperCount > 0 }
+            items(visibleCourses) { course ->
                 CourseItemCard(
                     course = course,
-                    onClick = { onCourseClick(course.courseCode) }
+                    onClick = { onCourseClick(course.courseCode) },
                 )
             }
             item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -177,7 +178,7 @@ fun VerticalDivider() {
 @Composable
 fun CourseItemCard(
     course: Course,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier

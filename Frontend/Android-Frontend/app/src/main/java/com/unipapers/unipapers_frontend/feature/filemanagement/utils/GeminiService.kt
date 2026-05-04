@@ -113,11 +113,11 @@ class GeminiService @Inject constructor(
                     }
                 )
             }
-            response.text ?: return@withContext GeminiResult.Error("Gemini returned empty response.")
+            response.text ?: return@withContext GeminiResult.Error("AI analysis returned no content.")
         } catch (e: TimeoutCancellationException) {
-            return@withContext GeminiResult.Error("AI analysis timed out after 45 seconds. Please manually add paper tags.")
+            return@withContext GeminiResult.Error("AI analysis timed out. Please manually add paper details.")
         } catch (e: Exception) {
-            return@withContext GeminiResult.Error("Gemini API error: ${e.message}")
+            return@withContext GeminiResult.Error(sanitizeErrorMessage(e.message ?: "Unknown AI error"))
         }
 
         // ── Strip markdown fences if Gemini wraps anyway ──────
@@ -162,10 +162,28 @@ class GeminiService @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            GeminiResult.Error(
-                "Gemini returned unparseable JSON: ${e.message}. " +
-                        "Raw response was: ${cleaned.take(300)}"
-            )
+            GeminiResult.Error("Failed to interpret AI response. Please fill in the details manually.")
+        }
+    }
+
+    /**
+     * Converts technical Gemini API errors into user-friendly messages.
+     */
+    private fun sanitizeErrorMessage(rawMessage: String): String {
+        return when {
+            rawMessage.contains("Resource has been exhausted", true) || 
+            rawMessage.contains("429", true) -> {
+                "AI service is currently busy. Please try again in a moment or fill details manually."
+            }
+            rawMessage.contains("Safety", true) || 
+            rawMessage.contains("blocked", true) -> {
+                "This document could not be analysed due to safety filters."
+            }
+            rawMessage.contains("Service Unavailable", true) || 
+            rawMessage.contains("503", true) -> {
+                "AI service is temporarily unavailable. Please try again later."
+            }
+            else -> "AI analysis failed. You can still proceed by entering details manually."
         }
     }
 }
