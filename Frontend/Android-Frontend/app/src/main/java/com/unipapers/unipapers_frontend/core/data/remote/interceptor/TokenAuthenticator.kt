@@ -56,6 +56,30 @@ class TokenAuthenticator @Inject constructor(
             return true
         }
 
+        if (response.code == 401) {
+            val hasBearer = response.request.header("Authorization")
+                ?.trim()
+                ?.startsWith("Bearer ") == true
+            if (!hasBearer) {
+                return false
+            }
+
+            val bodyText = runCatching {
+                response.peekBody(64 * 1024).string().lowercase()
+            }.getOrNull()
+
+            if (bodyText != null &&
+                (bodyText.contains("token_expired") ||
+                    bodyText.contains("access token expired") ||
+                    bodyText.contains("token expired") ||
+                    bodyText.contains("jwt expired"))
+            ) {
+                return true
+            }
+
+            return true
+        }
+
         return false
     }
 

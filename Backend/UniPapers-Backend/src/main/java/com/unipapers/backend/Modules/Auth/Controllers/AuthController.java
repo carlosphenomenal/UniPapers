@@ -66,8 +66,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestParam("accessToken") String accessToken) {
-        LoginResponseDto response = sessionService.refreshSession(accessToken);
+    public ResponseEntity<?> refresh(@RequestParam("refreshToken") String refreshToken) {
+        LoginResponseDto response = sessionService.refreshSession(refreshToken);
         return ResponseEntity.ok(response);
     }
 
