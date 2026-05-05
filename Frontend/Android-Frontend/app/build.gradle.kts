@@ -6,6 +6,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -97,6 +99,9 @@ dependencies {
 
     // Victory - Home, Notifications, Downloads
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
     
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.5")
