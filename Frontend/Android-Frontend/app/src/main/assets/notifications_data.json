@@ -1,0 +1,46 @@
+{
+  "notifications": [
+    {
+      "id": "1",
+      "type": "WELCOME",
+      "message": "Welcome to UniPapers! Start by uploading your first past paper.",
+      "timeAgo": "just now",
+      "isRead": false
+    },
+    {
+      "id": "2",
+      "type": "NEW_PAPER",
+      "message": "New paper uploaded for CSC 2100 - Data Structures Final Exam 2023/2024.",
+      "timeAgo": "2 hours ago",
+      "isRead": false
+    },
+    {
+      "id": "3",
+      "type": "UPLOAD_CONFIRMED",
+      "message": "Your paper has been uploaded successfully.",
+      "timeAgo": "1 day ago",
+      "isRead": true
+    },
+    {
+      "id": "4",
+      "type": "NEW_PAPER",
+      "message": "New paper uploaded for CSC 3100 - Operating Systems CAT 1 2023/2024.",
+      "timeAgo": "2 days ago",
+      "isRead": true
+    },
+    {
+      "id": "5",
+      "type": "PAPER_FLAGGED",
+      "message": "Your paper has been flagged for review by a peer.",
+      "timeAgo": "3 days ago",
+      "isRead": true
+    },
+    {
+      "id": "6",
+      "type": "FLAG_RESOLVED",
+      "message": "The flag on your paper has been resolved. Your paper is live again.",
+      "timeAgo": "4 days ago",
+      "isRead": true
+    }
+  ]
+}

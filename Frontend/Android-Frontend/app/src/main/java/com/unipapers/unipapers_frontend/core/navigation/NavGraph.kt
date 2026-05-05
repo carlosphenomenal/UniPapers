@@ -52,7 +52,7 @@ fun NavGraph(
             )
         }
         composable(Screen.Home.route) {
-            HomeScreen()
+            HomeScreen(navController = navController)
         }
         composable(Screen.Browse.route) {
             CourseUnitScreen(
@@ -92,6 +92,10 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(navController = navController)
+        }
+
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateToLogin = {
