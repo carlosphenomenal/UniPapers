@@ -18,12 +18,13 @@ import com.unipapers.unipapers_frontend.feature.browse.presentation.BrowsePapers
 import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
-import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
 import com.unipapers.unipapers_frontend.feature.auth.presentation.startup.StartupScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import com.unipapers.unipapers_frontend.feature.notifications.presentation.NotificationsScreen
+import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 
 @Composable
 fun NavGraph(
@@ -51,7 +52,7 @@ fun NavGraph(
             )
         }
         composable(Screen.Home.route) {
-            HomeScreen()
+            HomeScreen(navController = navController)
         }
         composable(Screen.Browse.route) {
             CourseUnitScreen(
@@ -91,6 +92,10 @@ fun NavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(navController = navController)
+        }
+
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateToLogin = {
