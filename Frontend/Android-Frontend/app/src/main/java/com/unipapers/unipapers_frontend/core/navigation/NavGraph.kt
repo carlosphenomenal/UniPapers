@@ -18,12 +18,13 @@ import com.unipapers.unipapers_frontend.feature.browse.presentation.BrowsePapers
 import com.unipapers.unipapers_frontend.feature.browse.presentation.CourseUnitScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.DownloadScreen
 import com.unipapers.unipapers_frontend.feature.filemanagement.presentation.screens.UploadFlowScreen
-import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
 import com.unipapers.unipapers_frontend.feature.profile.presentation.ProfileScreen
 import com.unipapers.unipapers_frontend.feature.auth.presentation.startup.StartupScreen
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import com.unipapers.unipapers_frontend.feature.notifications.presentation.NotificationsScreen
+import com.unipapers.unipapers_frontend.feature.home.presentation.screens.HomeScreen
 
 @Composable
 fun NavGraph(

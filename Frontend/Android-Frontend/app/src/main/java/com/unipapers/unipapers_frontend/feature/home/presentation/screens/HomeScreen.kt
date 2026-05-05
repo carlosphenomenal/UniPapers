@@ -53,9 +53,11 @@ import com.unipapers.unipapers_frontend.feature.home.presentation.components.Rec
 import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeState
 import com.unipapers.unipapers_frontend.feature.home.presentation.viewModel.HomeViewModel
 import com.unipapers.unipapers_frontend.feature.pdfviewer.presentation.PdfViewerScreen
+import com.unipapers.unipapers_frontend.core.navigation.Screen
 
 @Composable
 fun HomeScreen(
+    navController: androidx.navigation.NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -72,7 +74,8 @@ fun HomeScreen(
             onFilterSelected = { viewModel.onFilterSelected(it) },
             onPaperClick = { viewModel.onPaperClicked(it) },
             onDownloadClick = { viewModel.onDownloadClicked(it) },
-            onRetry = { viewModel.retry() }
+            onRetry = { viewModel.retry() },
+            onNotificationsClick = { navController.navigate(Screen.Notifications.route) }
         )
     }
 }
@@ -84,7 +87,8 @@ fun HomeScreenContent(
     onFilterSelected: (PaperType?) -> Unit,
     onPaperClick: (String) -> Unit,
     onDownloadClick: (String) -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onNotificationsClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -97,7 +101,7 @@ fun HomeScreenContent(
                 .padding(bottom = 32.dp)
         ) {
             // Top header
-            HomeHeader()
+            HomeHeader(onNotificationsClick = onNotificationsClick)
 
             Column(
                 modifier = Modifier
@@ -203,7 +207,7 @@ fun HomeScreenContent(
 // ─────────────────────────────────────────────
 
 @Composable
-fun HomeHeader() {
+fun HomeHeader(onNotificationsClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,7 +228,7 @@ fun HomeHeader() {
                 }
             }
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onNotificationsClick) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = "Notifications",
