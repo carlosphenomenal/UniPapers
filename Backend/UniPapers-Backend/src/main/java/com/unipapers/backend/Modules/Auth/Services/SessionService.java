@@ -13,6 +13,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -148,4 +149,10 @@ public class SessionService {
     }
 
 
+    public void updateFcmToken(String deviceId, String fcmToken) {
+        Session session = sessionRepo.findByDeviceId(deviceId)
+                .orElseThrow(() -> new IllegalStateException("Session not found for device ID: " + deviceId));
+        session.setFcmToken(fcmToken);
+        sessionRepo.save(session);
+    }
 }

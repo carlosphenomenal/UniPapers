@@ -5,6 +5,7 @@ import com.unipapers.backend.Common.Enums.Role;
 import com.unipapers.backend.Modules.Auth.Models.EmailVerificationCode;
 import com.unipapers.backend.Modules.Auth.Models.Session;
 import com.unipapers.backend.Modules.FileManagement.Models.PastPaper;
+import com.unipapers.backend.Modules.Notification.Models.Notification;
 import com.unipapers.backend.Modules.Program.Models.Program;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -78,6 +79,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<EmailVerificationCode> emailVerificationCodes;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Notification> notifications;
 
     private Instant addedAt;
     private Instant updatedAt;

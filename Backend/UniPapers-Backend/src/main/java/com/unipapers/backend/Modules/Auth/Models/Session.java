@@ -51,6 +51,9 @@ public class Session {
     @Column(name = "device_id", length = 64)
     private String deviceId;
 
+    @Column(name = "fcm_token", length = 255)
+    private String fcmToken;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

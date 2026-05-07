@@ -60,4 +60,5 @@ public class PastPaperService {
                 .type(pastPaper.getType() != null ? pastPaper.getType().name() : null)
                 .build();
     }
+
 }
