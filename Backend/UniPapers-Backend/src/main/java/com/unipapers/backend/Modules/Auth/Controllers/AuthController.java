@@ -81,4 +81,10 @@ public class AuthController {
     public ResponseEntity<?> updatePassword(@Valid @RequestBody UpdatePasswordRequestDto updatePasswordRequestDto) {
         return ResponseEntity.ok().body(Map.of("message", authService.updatePassword(updatePasswordRequestDto)));
     }
+
+    @PatchMapping("/update-fcm-token")
+    public ResponseEntity<?> updateFcmToken(@RequestParam("deviceId") String deviceId, @RequestParam("fcmToken") String fcmToken){
+        sessionService.updateFcmToken(deviceId, fcmToken);
+        return ResponseEntity.ok().build();
+    }
 }

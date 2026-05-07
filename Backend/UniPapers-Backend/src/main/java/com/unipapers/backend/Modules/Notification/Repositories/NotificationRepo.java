@@ -1,14 +1,16 @@
-package com.unipapers.backend.Modules.FileManagement.Repositories;
+package com.unipapers.backend.Modules.Notification.Repositories;
 
-import com.unipapers.backend.Modules.FileManagement.Models.Notification;
+import com.unipapers.backend.Modules.Notification.Models.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface NotificationRepo extends JpaRepository<Notification, Long> {
-    List<Notification> findByUserId(Long userId);
 
     long countByUserIdAndReadFalse(Long userId);
 
     List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    Optional<Notification> findByPublicId(String notificationPublicId);
 }

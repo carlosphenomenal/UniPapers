@@ -20,4 +20,6 @@ public interface SessionRepo extends JpaRepository<Session, Long> {
     Optional<Session> findByRefreshTokenHashAndRevokedFalse(String tokenHash);
 
     List<Session> findByUserIdAndRevokedFalse(Long userId);
+
+    Optional<Session> findByDeviceId(String deviceId);
 }

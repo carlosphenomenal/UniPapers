@@ -2,6 +2,7 @@ package com.unipapers.backend.Exceptions;
 
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.InvalidRefreshTokenException;
+import com.unipapers.backend.Exceptions.CustomExceptions.NotificationNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperNotFoundException;
 import com.unipapers.backend.Exceptions.Models.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -232,6 +233,23 @@ public class GlobalExceptionHandler {
 
         log.warn("Past paper not found: {}", ex.getMessage());
 
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NotificationNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotificationNotFoundException(
+            NotificationNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        ApiError error = new ApiError(
+                Instant.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                UUID.randomUUID().toString()
+        );
+        log.warn("Notification not found: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 

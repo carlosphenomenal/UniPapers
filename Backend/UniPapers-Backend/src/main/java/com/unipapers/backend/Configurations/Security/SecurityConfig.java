@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/me").authenticated()
-                        .requestMatchers("/auth/**", "/programs/get").permitAll()
+                        .requestMatchers("/auth/**", "/programs/get", "/notifications/**", "/auth/update-fcm-token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
