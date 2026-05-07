@@ -87,7 +87,11 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 response.body()?.let { loginResponse ->
                     prefs.saveTokens(loginResponse.accessToken, loginResponse.refreshToken)
-                    prefs.saveUser(loginResponse.publicId, loginResponse.email)
+                    prefs.saveUser(
+                        userId = loginResponse.publicId,
+                        email = loginResponse.email,
+                        deviceId = loginResponse.deviceId
+                    )
                     Resource.Success(loginResponse)
                 } ?: Resource.Error("Empty response body")
             } else {
