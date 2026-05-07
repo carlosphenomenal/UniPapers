@@ -101,29 +101,29 @@ public class NotificationService {
                 .build());
     }
 
-    private void sendPushNotification(User user, String title, String message){
+    private void sendPushNotification(User user, String title, String message) {
         List<Session> sessions = user.getSessions();
-        sessions.forEach(session -> {
-            Message fireBaseMessage = Message.builder()
-                    .setToken(session.getFcmToken())
-                    .setNotification(
-                            com.google.firebase.messaging.Notification.builder()
-                                    .setTitle(title)
-                                    .setBody(message)
-                                    .build()
-                    )
-                    .build();
 
-            try {
-                FirebaseMessaging.getInstance().send(fireBaseMessage);
-            } catch (FirebaseMessagingException e) {
-                if (e.getMessagingErrorCode() ==
-                        MessagingErrorCode.UNREGISTERED) {
-
-                    log.error("Firebase token is invalid: {}, user might have reinstalled the app or cleared app data", session.getFcmToken());
-                }
-            }
-        });
+        sessions.stream()
+                .filter(session -> session.getRevoked() != true && session.getFcmToken() != null && !session.getFcmToken().isBlank())
+                .forEach(session -> {
+                    Message fireBaseMessage = Message.builder()
+                            .setToken(session.getFcmToken())
+                            .setNotification(
+                                    com.google.firebase.messaging.Notification.builder()
+                                            .setTitle(title)
+                                            .setBody(message)
+                                            .build()
+                            )
+                            .build();
+                    try {
+                        FirebaseMessaging.getInstance().send(fireBaseMessage);
+                    } catch (FirebaseMessagingException e) {
+                        if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                            log.error("Firebase token is invalid: {}, user might have reinstalled the app or cleared app data", session.getFcmToken());
+                        }
+                    }
+                });
     }
 
 }

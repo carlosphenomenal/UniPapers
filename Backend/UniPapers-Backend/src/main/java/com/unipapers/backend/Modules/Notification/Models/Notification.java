@@ -1,5 +1,6 @@
 package com.unipapers.backend.Modules.Notification.Models;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import com.unipapers.backend.Common.Models.User;
 import com.unipapers.backend.Modules.Notification.Enums.NotificationType;
 import jakarta.persistence.*;
@@ -14,6 +15,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "notifications")
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,7 +51,12 @@ public class Notification {
 
     @PrePersist
     public void prePersist() {
+
         this.createdAt = Instant.now();
+        if (publicId == null) {
+            publicId = UlidCreator.getUlid().toString();
+        }
+
     }
 
     @PreUpdate
