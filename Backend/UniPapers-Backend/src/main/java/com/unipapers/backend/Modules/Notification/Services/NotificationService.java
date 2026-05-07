@@ -52,6 +52,13 @@ public class NotificationService {
         sendPushNotification(user, title, message);
     }
 
+    // Broadcast a notification to all users using Firebase Cloud Messaging (FCM)
+    @Transactional
+    public void sendBroadcastNotification(String title, String message, NotificationType notificationType) {
+        userRepo.findAll().forEach(user -> saveNotificationToDatabase(user, title, message, notificationType));
+        broadcastNotification(title, message);
+    }
+
     // user notifications when made
     // TODO: Implement pagination and caching for improved performance
     public List<NotificationResponseDto> getUserNotifications(Long userId) {
@@ -124,6 +131,23 @@ public class NotificationService {
                         }
                     }
                 });
+    }
+
+    private void broadcastNotification(String title, String message) {
+        Message fireBaseMessage = Message.builder()
+                .setTopic("all-users")
+                .setNotification(
+                        com.google.firebase.messaging.Notification.builder()
+                                .setTitle(title)
+                                .setBody(message)
+                                .build()
+                )
+                .build();
+        try {
+            FirebaseMessaging.getInstance().send(fireBaseMessage);
+        } catch (FirebaseMessagingException e) {
+            log.error("Failed to send broadcast notification: {}", e.getMessage());
+        }
     }
 
 }

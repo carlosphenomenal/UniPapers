@@ -7,10 +7,12 @@ import com.unipapers.backend.Modules.Notification.Enums.NotificationType;
 import com.unipapers.backend.Modules.Notification.Services.NotificationService;
 import com.unipapers.backend.Utils.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/notifications")
@@ -19,21 +21,19 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    //get all notifications
-//    @GetMapping("/get")
-//    public List<NotificationResponseDto> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
-//        return notificationService.getUserNotifications(userDetails.id());
-//    }
-
+    // Get all notifications for the authenticated user
     @GetMapping("/get")
-    public List<NotificationResponseDto> getNotifications(@RequestParam("id") Long id) {
-        return notificationService.getUserNotifications(id);
+    public ResponseEntity<List<NotificationResponseDto>> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(notificationService.getUserNotifications(userDetails.id()));
     }
 
     //mark a notification as read
     @PutMapping("/mark-as-read/{publicId}")
-    public void markAsRead(@PathVariable String publicId){
+    public ResponseEntity<?> markAsRead(@PathVariable String publicId){
+
         notificationService.markAsRead(publicId);
+        return ResponseEntity.ok().body(Map.of("message", "Notification marked as read"));
+
     }
 
     //counting the unread
@@ -43,12 +43,23 @@ public class NotificationController {
     }
 
     @PostMapping("/send")
-    public void sendNotification(@RequestBody SendNotificationRequestDto dto){
+    public ResponseEntity<?> sendNotification(@RequestBody SendNotificationRequestDto dto){
         notificationService.sendNotification(
                 dto.getUserPublicId(),
                 dto.getTitle(),
                 dto.getMessage(),
                 dto.getNotificationType() != null ? NotificationType.valueOf(dto.getNotificationType()) : NotificationType.GENERAL);
+        return ResponseEntity.ok().body(Map.of("message", "Notification sent successfully"));
+    }
+
+
+    @PostMapping("/broadcast")
+    public ResponseEntity<?> sendBroadcastNotification(@RequestBody SendNotificationRequestDto dto){
+        notificationService.sendBroadcastNotification(
+                dto.getTitle(),
+                dto.getMessage(),
+                dto.getNotificationType() != null ? NotificationType.valueOf(dto.getNotificationType()) : NotificationType.GENERAL);
+        return ResponseEntity.ok().body(Map.of("message", "Notification broadcast successfully"));
     }
 
 }
