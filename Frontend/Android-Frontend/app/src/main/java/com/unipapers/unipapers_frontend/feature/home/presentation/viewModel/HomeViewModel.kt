@@ -2,6 +2,8 @@ package com.unipapers.unipapers_frontend.feature.home.presentation.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.DownloadStatus
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.DownloadFileUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetPastPapersUseCase
@@ -17,7 +19,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val getPastPapersUseCase: GetPastPapersUseCase,
     private val getSignedUrlUseCase: GetSignedUrlUseCase,
-    private val downloadFileUseCase: DownloadFileUseCase
+    private val downloadFileUseCase: DownloadFileUseCase,
+    private val fileRepository: FileRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -27,6 +30,19 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadPastPapers()
+        observeDownloads()
+    }
+
+    private fun observeDownloads() {
+        viewModelScope.launch {
+            fileRepository.downloads.collect { downloads ->
+                val completedIds = downloads
+                    .filter { it.status == DownloadStatus.COMPLETED }
+                    .map { it.pastPaperPublicId }
+                    .toSet()
+                _state.update { it.copy(downloadedPaperIds = completedIds) }
+            }
+        }
     }
 
     private fun loadPastPapers() {

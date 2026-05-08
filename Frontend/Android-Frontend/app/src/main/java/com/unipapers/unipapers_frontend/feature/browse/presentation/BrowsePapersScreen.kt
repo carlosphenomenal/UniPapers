@@ -25,6 +25,7 @@ import com.unipapers.unipapers_frontend.feature.browse.presentation.components.P
 import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
 import com.unipapers.unipapers_frontend.core.domain.model.Paper
 import com.unipapers.unipapers_frontend.core.domain.model.PaperType
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +51,9 @@ fun BrowsePapersScreen(
             onPaperClick(paperId)
             viewModel.onPaperClicked(paperId)
         },
+        onDownloadClick = { paperId ->
+            viewModel.onDownloadClicked(paperId)
+        },
         onTypeSelected = viewModel::onTypeSelected,
         onNavigateToPdf = onNavigateToPdf
     )
@@ -61,6 +65,7 @@ fun BrowsePapersContent(
     state: BrowsePapersState,
     onBackClick: () -> Unit,
     onPaperClick: (String) -> Unit,
+    onDownloadClick: (String) -> Unit,
     onTypeSelected: (PaperType) -> Unit,
     onNavigateToPdf: (String) -> Unit
 ) {
@@ -69,7 +74,7 @@ fun BrowsePapersContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(PrimaryBlue)
+                    .background(SimpleBlue)
             ) {
                 TopAppBar(
                     title = {
@@ -124,7 +129,7 @@ fun BrowsePapersContent(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = PrimaryBlue,
+                        containerColor = SimpleBlue,
                         titleContentColor = Color.White
                     )
                 )
@@ -163,7 +168,9 @@ fun BrowsePapersContent(
                     items(filteredPapers) { paper ->
                         PaperListItem(
                             paper = paper,
-                            onClick = { onPaperClick(paper.id) }
+                            isDownloaded = state.downloadedPaperIds.contains(paper.id),
+                            onClick = { onPaperClick(paper.id) },
+                            onDownloadClick = { onDownloadClick(paper.id) }
                         )
                     }
                 }
@@ -203,6 +210,7 @@ fun BrowsePapersScreenPreview() {
         state = mockState,
         onBackClick = { },
         onPaperClick = { },
+        onDownloadClick = { },
         onTypeSelected = { },
         onNavigateToPdf = { }
     )

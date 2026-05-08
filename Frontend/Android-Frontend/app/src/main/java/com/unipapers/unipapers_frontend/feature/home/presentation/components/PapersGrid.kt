@@ -9,6 +9,7 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 @Composable
 fun PapersGrid(
     papers: List<Paper>,
+    downloadedPaperIds: Set<String>,
     onPaperClick: (String) -> Unit,
     onDownloadClick: (String) -> Unit
 ) {
@@ -26,7 +27,8 @@ fun PapersGrid(
                         paper = paper,
                         onPaperClick = onPaperClick,
                         onDownloadClick = onDownloadClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        isDownloaded = downloadedPaperIds.contains(paper.id)
                     )
                 }
                 // Fill the empty space if there's only one item in the row

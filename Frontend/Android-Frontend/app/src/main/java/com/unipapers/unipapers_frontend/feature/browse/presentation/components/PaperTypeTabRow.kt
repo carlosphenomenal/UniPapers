@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.core.domain.model.PaperType
-import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 
 @Composable
 fun PaperTypeTabRow(
@@ -26,7 +26,7 @@ fun PaperTypeTabRow(
 
     TabRow(
         selectedTabIndex = selectedIndex,
-        containerColor = PrimaryBlue,
+        containerColor = SimpleBlue,
         contentColor = Color.White,
         indicator = { tabPositions ->
             if (selectedIndex < tabPositions.size) {
