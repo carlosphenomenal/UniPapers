@@ -6,7 +6,7 @@ data class ProfileResponse(
     val user: UserInfo,
     val stats: UserStats,
     @SerializedName("settings_options")
-    val settingsOptions: List<SettingOption>
+    val settingsOptions: List<SettingOption> = emptyList()
 )
 
 data class UserInfo(

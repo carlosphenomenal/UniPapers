@@ -3,12 +3,15 @@ package com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto
 import com.google.gson.annotations.SerializedName
 
 data class UserDto(
-    @SerializedName("id") val id: String? = null,
-    @SerializedName("fullName") val fullName: String? = null,
-    @SerializedName("email") val email: String? = null,
-    @SerializedName("studentNumber") val studentNumber: String? = null,
-    @SerializedName("programme") val programme: String? = null,
-    @SerializedName("yearOfStudy") val yearOfStudy: Int? = null,
-    @SerializedName("semester") val semester: Int? = null,
-    @SerializedName("uploadedPastPapersCount") val uploadedPastPapersCount: Int? = null
+    @SerializedName("id") val id: String?,
+    @SerializedName("fullName") val fullName: String?,
+    @SerializedName("email") val email: String?,
+    @SerializedName("studentNumber") val studentNumber: String?,
+    @SerializedName("programme") val programme: String?,
+    @SerializedName("yearOfStudy") val yearOfStudy: Int?,
+    @SerializedName("currentSemester") val currentSemester: Int?,
+    @SerializedName("freeViewsRemaining") val freeViewsRemaining: Int?,
+    @SerializedName("hasUnlockedAccess") val hasUnlockedAccess: Boolean?,
+    @SerializedName("uploadCount") val uploadCount: Int?,
+    @SerializedName("downloadCount") val downloadCount: Int?
 )

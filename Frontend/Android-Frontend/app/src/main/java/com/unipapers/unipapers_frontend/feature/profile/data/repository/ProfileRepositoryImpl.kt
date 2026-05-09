@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.domain.model.User
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileRemoteDataSource
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto.UserDto
+import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
 import com.unipapers.unipapers_frontend.feature.profile.domain.repository.ProfileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -17,25 +18,11 @@ class ProfileRepositoryImpl @Inject constructor(
 
     override suspend fun getProfile(): Result<User> {
         return try {
-            // ✅ 1. Try backend API first
             val remoteUser = remoteDataSource.getProfile()
             Result.success(remoteUser.toDomain())
         } catch (e: Exception) {
-
-            // 🔁 2. Fallback to local JSON if backend fails
-            try {
-                val jsonString = context.assets.open("profile_mock.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-
-                val dto = gson.fromJson(jsonString, UserDto::class.java)
-
-                Result.success(dto.toDomain())
-
-            } catch (mockError: Exception) {
-                // ❌ If both fail, return original error
-                Result.failure(e)
-            }
+            android.util.Log.e("API_ERROR", "Failed to fetch profile", e)
+            Result.failure(e) // ❗ DO NOT fallback yet
         }
     }
 
@@ -55,17 +42,18 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     // ✅ Mapping DTO → Domain
+    // ✅ Mapping DTO → Domain with null safety
     private fun UserDto.toDomain() = User(
-        id = id ?: email.orEmpty(),
-        fullName = fullName.orEmpty(),
-        email = email.orEmpty(),
-        studentNumber = studentNumber.orEmpty(),
-        programme = programme.orEmpty(),
+        id = id ?: "",
+        fullName = fullName ?: "Unknown User",
+        email = email ?: "",
+        studentNumber = studentNumber ?: "N/A",
+        programme = programme ?: "Not Assigned",
         yearOfStudy = yearOfStudy ?: 1,
-        currentSemester = semester ?: 1,
-        freeViewsRemaining = 0,
-        hasUnlockedAccess = false,
-        uploadCount = uploadedPastPapersCount ?: 0,
-        downloadCount = 0
+        currentSemester = currentSemester ?: 1,
+        freeViewsRemaining = freeViewsRemaining ?: 0,
+        hasUnlockedAccess = hasUnlockedAccess ?: false,
+        uploadCount = uploadCount ?: 0,
+        downloadCount = downloadCount ?: 0
     )
 }
