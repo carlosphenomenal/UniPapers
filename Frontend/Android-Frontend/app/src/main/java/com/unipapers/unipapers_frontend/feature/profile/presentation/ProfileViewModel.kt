@@ -7,7 +7,7 @@ import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.domain.model.User
 import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
 import com.unipapers.unipapers_frontend.feature.profile.domain.model.UserInfo
-import com.unipapers.unipapers_frontend.feature.profile.domain.model.UserStats
+import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileStats
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.GetProfileUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdateNotificationPrefsUseCase
 import com.unipapers.unipapers_frontend.feature.profile.domain.usecase.UpdatePasswordUseCase
@@ -42,7 +42,6 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                // Backend-first: ProfileRepositoryImpl.getProfile() should hit the API.
                 val result = withContext(Dispatchers.IO) { getProfileUseCase() }
                 result.fold(
                     onSuccess = { remoteUser ->
@@ -55,7 +54,6 @@ class ProfileViewModel @Inject constructor(
                         }
                     },
                     onFailure = { e ->
-                        // If backend fails, fall back to mock JSON so UI stays functional.
                         val mockProfile = runCatching { loadMockProfileResponse() }
                             .getOrElse { null }
                         if (mockProfile != null) {
@@ -63,7 +61,7 @@ class ProfileViewModel @Inject constructor(
                                 it.copy(
                                     isLoading = false,
                                     profile = mockProfile,
-                                    error = e.toString()
+                                    error = null // Clear error if mock succeeds, or keep it as a warning
                                 )
                             }
                         } else {
@@ -93,10 +91,13 @@ class ProfileViewModel @Inject constructor(
         user = UserInfo(
             fullName = fullName,
             email = email,
-            institution = programme,
-            studentId = studentNumber
+            institution = "Your Institution", // TODO: Add institution to User domain model if needed
+            studentId = studentNumber,
+            programme = programme,
+            yearOfStudy = yearOfStudy,
+            currentSemester = currentSemester
         ),
-        stats = UserStats(
+        stats = ProfileStats(
             uploadedPastPapers = uploadCount
         ),
         settingsOptions = emptyList()
@@ -178,7 +179,6 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onLogout(onLoggedOut: () -> Unit) {
-        // Clear session logic would go here
         onLoggedOut()
     }
 

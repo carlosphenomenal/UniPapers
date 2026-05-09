@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 
 @Composable
-fun ProfileStatsRow(uploadCount: Int, downloadCount: Int) {
+fun ProfileStatsRow(
+    uploadCount: Int
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -34,13 +36,6 @@ fun ProfileStatsRow(uploadCount: Int, downloadCount: Int) {
             value = uploadCount.toString(),
             containerColor = Color(0xFFEAF5FF),
             contentColor = SimpleBlue,
-            modifier = Modifier.weight(1f)
-        )
-        StatCard(
-            label = "Downloads",
-            value = downloadCount.toString(),
-            containerColor = Color(0xFFFFF4E1),
-            contentColor = Color(0xFFE65100),
             modifier = Modifier.weight(1f)
         )
     }
@@ -74,7 +69,9 @@ private fun StatCard(
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
             )
+
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = label,
                 color = contentColor.copy(alpha = 0.8f),

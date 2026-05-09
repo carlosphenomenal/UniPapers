@@ -10,7 +10,6 @@ data class User(
     val currentSemester: Int,
     val freeViewsRemaining: Int,
     val hasUnlockedAccess: Boolean,
-    val uploadCount: Int,
-    val downloadCount: Int
+    val uploadCount: Int
 )
 

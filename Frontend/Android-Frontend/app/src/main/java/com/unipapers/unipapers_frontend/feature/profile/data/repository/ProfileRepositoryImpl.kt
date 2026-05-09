@@ -1,11 +1,11 @@
 package com.unipapers.unipapers_frontend.feature.profile.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.domain.model.User
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileRemoteDataSource
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.dto.UserDto
-import com.unipapers.unipapers_frontend.feature.profile.domain.model.ProfileResponse
 import com.unipapers.unipapers_frontend.feature.profile.domain.repository.ProfileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -21,12 +21,15 @@ class ProfileRepositoryImpl @Inject constructor(
             val remoteUser = remoteDataSource.getProfile()
             Result.success(remoteUser.toDomain())
         } catch (e: Exception) {
-            android.util.Log.e("API_ERROR", "Failed to fetch profile", e)
-            Result.failure(e) // ❗ DO NOT fallback yet
+            Log.e("API_ERROR", "Failed to fetch profile", e)
+            Result.failure(e)
         }
     }
 
-    override suspend fun updateProfile(year: Int, semester: Int): Result<Unit> {
+    override suspend fun updateProfile(
+        year: Int,
+        semester: Int
+    ): Result<Unit> {
         return runCatching {
             remoteDataSource.updateProfile(year, semester)
         }
@@ -37,12 +40,13 @@ class ProfileRepositoryImpl @Inject constructor(
         newPassword: String
     ): Result<Unit> {
         return runCatching {
-            remoteDataSource.updatePassword(currentPassword, newPassword)
+            remoteDataSource.updatePassword(
+                currentPassword,
+                newPassword
+            )
         }
     }
 
-    // ✅ Mapping DTO → Domain
-    // ✅ Mapping DTO → Domain with null safety
     private fun UserDto.toDomain() = User(
         id = id ?: "",
         fullName = fullName ?: "Unknown User",
@@ -53,7 +57,7 @@ class ProfileRepositoryImpl @Inject constructor(
         currentSemester = currentSemester ?: 1,
         freeViewsRemaining = freeViewsRemaining ?: 0,
         hasUnlockedAccess = hasUnlockedAccess ?: false,
-        uploadCount = uploadCount ?: 0,
-        downloadCount = downloadCount ?: 0
+        uploadCount = uploadCount ?: 0
+
     )
 }

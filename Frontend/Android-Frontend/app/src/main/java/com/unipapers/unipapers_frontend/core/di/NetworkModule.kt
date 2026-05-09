@@ -1,10 +1,13 @@
 package com.unipapers.unipapers_frontend.core.di
 
 import com.google.gson.Gson
-import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
+import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
+import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
+import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
 import dagger.Module
 import dagger.Provides
@@ -15,10 +18,24 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+import com.unipapers.unipapers_frontend.BuildConfig
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    /*
+     * NOTE: SharedPreferences and AppPreferences providers have been removed from here
+     * because they are already provided in AppPreferencesModule.
+     */
+
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(
+        appPreferences: AppPreferences
+    ): AuthInterceptor {
+        return AuthInterceptor(appPreferences)
+    }
 
     @Provides
     @Singleton
@@ -26,18 +43,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(): AuthInterceptor = AuthInterceptor()
-
-    // 1. Provide the Logging Interceptor
-    @Provides
-    @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
     }
 
-    // 2. Add the logger to the OkHttpClient
     @Provides
     @Singleton
     fun provideOkHttpClient(
@@ -46,14 +61,16 @@ object NetworkModule {
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .addInterceptor(loggingInterceptor) // Adds the logger here
+            .addInterceptor(loggingInterceptor)
             .build()
     }
 
-    // 3. Provide Retrofit using the OkHttpClient from above
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.BASE_URL)
             .client(okHttpClient)
@@ -61,19 +78,41 @@ object NetworkModule {
             .build()
     }
 
-    @Provides
-    @Singleton
-    fun provideFileApi(retrofit: Retrofit): FileApi = retrofit.create(FileApi::class.java)
+    // --- API Service Providers ---
 
     @Provides
     @Singleton
-    fun provideCloudUploadApi(retrofit: Retrofit): CloudUploadApi = retrofit.create(CloudUploadApi::class.java)
+    fun provideAuthApi(
+        retrofit: Retrofit
+    ): AuthApiService = retrofit.create(AuthApiService::class.java)
 
     @Provides
     @Singleton
-    fun provideProfileApi(retrofit: Retrofit): ProfileApiService = retrofit.create(ProfileApiService::class.java)
+    fun provideProgramApi(
+        retrofit: Retrofit
+    ): ProgramApiService = retrofit.create(ProgramApiService::class.java)
 
     @Provides
     @Singleton
-    fun provideUniPapersApiService(retrofit: Retrofit): UniPapersApiService = retrofit.create(UniPapersApiService::class.java)
+    fun provideFileApi(
+        retrofit: Retrofit
+    ): FileApi = retrofit.create(FileApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCloudUploadApi(
+        retrofit: Retrofit
+    ): CloudUploadApi = retrofit.create(CloudUploadApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideProfileApi(
+        retrofit: Retrofit
+    ): ProfileApiService = retrofit.create(ProfileApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUniPapersApiService(
+        retrofit: Retrofit
+    ): UniPapersApiService = retrofit.create(UniPapersApiService::class.java)
 }

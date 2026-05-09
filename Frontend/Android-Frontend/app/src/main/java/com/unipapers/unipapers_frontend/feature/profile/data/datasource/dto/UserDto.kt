@@ -12,6 +12,5 @@ data class UserDto(
     @SerializedName("currentSemester") val currentSemester: Int?,
     @SerializedName("freeViewsRemaining") val freeViewsRemaining: Int?,
     @SerializedName("hasUnlockedAccess") val hasUnlockedAccess: Boolean?,
-    @SerializedName("uploadCount") val uploadCount: Int?,
-    @SerializedName("downloadCount") val downloadCount: Int?
+    @SerializedName("uploadCount") val uploadCount: Int?
 )
