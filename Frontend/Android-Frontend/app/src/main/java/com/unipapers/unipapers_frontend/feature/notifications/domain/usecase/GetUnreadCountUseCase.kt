@@ -4,10 +4,10 @@ import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.notifications.domain.repository.NotificationRepository
 import javax.inject.Inject
 
-class MarkNotificationsReadUseCase @Inject constructor(
+class GetUnreadCountUseCase @Inject constructor(
     private val repository: NotificationRepository
 ) {
-    suspend operator fun invoke(publicId: String): Resource<String> {
-        return repository.markAsRead(publicId)
+    suspend operator fun invoke(): Resource<Long> {
+        return repository.getUnreadCount()
     }
 }

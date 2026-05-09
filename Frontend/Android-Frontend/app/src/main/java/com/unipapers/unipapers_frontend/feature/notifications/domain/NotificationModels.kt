@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.notifications.domain
 
 enum class NotificationType {
+    GENERAL,
     UPLOAD_CONFIRMED,
     NEW_PAPER,
     PAPER_FLAGGED,
@@ -8,10 +9,11 @@ enum class NotificationType {
     WELCOME
 }
 
-data class Notification( //shape of one notification item
+data class Notification(
     val id: String,
+    val title: String,
     val type: NotificationType,
     val message: String,
-    val timeAgo: String,
+    val createdAt: String,
     val isRead: Boolean = false
 )

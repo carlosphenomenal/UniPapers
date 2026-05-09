@@ -21,6 +21,10 @@ import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository
 import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
 import com.unipapers.unipapers_frontend.feature.home.data.repository.HomeRepositoryImpl
 import com.unipapers.unipapers_frontend.feature.home.domain.repository.HomeRepository
+import com.unipapers.unipapers_frontend.feature.notifications.data.datasource.NotificationApiService
+import com.unipapers.unipapers_frontend.feature.notifications.data.datasource.NotificationRemoteDataSource
+import com.unipapers.unipapers_frontend.feature.notifications.data.repository.NotificationRepositoryImpl
+import com.unipapers.unipapers_frontend.feature.notifications.domain.repository.NotificationRepository
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileRemoteDataSource
 import com.unipapers.unipapers_frontend.feature.profile.data.repository.ProfileRepositoryImpl
@@ -111,5 +115,22 @@ object RepositoryModule {
         gson: Gson
     ): BrowseRepository {
         return BrowseRepositoryImpl(apiService, fileApi, gson)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRemoteDataSource(
+        apiService: NotificationApiService
+    ): NotificationRemoteDataSource {
+        return NotificationRemoteDataSource(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository(
+        remoteDataSource: NotificationRemoteDataSource,
+        gson: Gson
+    ): NotificationRepository {
+        return NotificationRepositoryImpl(remoteDataSource, gson)
     }
 }
