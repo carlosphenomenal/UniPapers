@@ -134,6 +134,7 @@ fun HomeScreenContent(
                 // Horizontal scrolling paper cards
                 RecentPapersRow(
                     papers = state.recentPapers,
+                    downloadedPaperIds = state.downloadedPaperIds,
                     onPaperClick = onPaperClick,
                     onDownloadClick = onDownloadClick
                 )
@@ -172,6 +173,7 @@ fun HomeScreenContent(
                         // Course unit grid
                         PapersGrid(
                             papers = state.papers,
+                            downloadedPaperIds = state.downloadedPaperIds,
                             onPaperClick = onPaperClick,
                             onDownloadClick = onDownloadClick
                         )
@@ -251,8 +253,7 @@ fun HomeSearchBar(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = CircleShape,
-        color = Color.White,
-        shadowElevation = 4.dp
+        color = Color.White, shadowElevation = 4.dp
     ) {
         TextField(
             value = query,

@@ -11,6 +11,7 @@ import com.unipapers.unipapers_frontend.feature.home.domain.model.Paper
 @Composable
 fun RecentPapersRow(
     papers: List<Paper>,
+    downloadedPaperIds: Set<String>,
     onPaperClick: (String) -> Unit,
     onDownloadClick: (String) -> Unit
 ) {
@@ -22,7 +23,8 @@ fun RecentPapersRow(
             PaperCard(
                 paper = paper,
                 onPaperClick = onPaperClick,
-                onDownloadClick = onDownloadClick
+                onDownloadClick = onDownloadClick,
+                isDownloaded = downloadedPaperIds.contains(paper.id)
             )
         }
     }
