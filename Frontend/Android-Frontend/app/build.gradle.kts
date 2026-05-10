@@ -109,10 +109,12 @@ dependencies {
 
     //gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+//gloria
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    
     // Hilt
     implementation("com.google.dagger:hilt-android:2.55")
+    implementation(libs.androidx.benchmark.baseline.profile.gradle.plugin)
     ksp("com.google.dagger:hilt-compiler:2.55")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     

@@ -1,13 +1,10 @@
 package com.unipapers.unipapers_frontend.core.di
 
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
 import com.unipapers.unipapers_frontend.core.data.remote.api.AuthApiService
 import com.unipapers.unipapers_frontend.core.data.remote.api.ProgramApiService
 import com.unipapers.unipapers_frontend.core.data.remote.interceptor.AuthInterceptor
-import com.unipapers.unipapers_frontend.core.data.remote.interceptor.TokenAuthenticator
-import com.unipapers.unipapers_frontend.core.data.remote.interceptor.TokenRefreshCoordinator
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
 import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
@@ -17,141 +14,105 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
-import javax.inject.Named
 import javax.inject.Singleton
+import com.unipapers.unipapers_frontend.BuildConfig
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    @Suppress("unused")
-    @Provides
-    @Singleton
-    fun provideGson(): Gson = GsonBuilder().setLenient().create()
+    /*
+     * NOTE: SharedPreferences and AppPreferences providers have been removed from here
+     * because they are already provided in AppPreferencesModule.
+     */
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(prefs: AppPreferences): AuthInterceptor = AuthInterceptor(prefs)
+    fun provideAuthInterceptor(
+        appPreferences: AppPreferences
+    ): AuthInterceptor {
+        return AuthInterceptor(appPreferences)
+    }
 
     @Provides
     @Singleton
-    fun provideTokenAuthenticator(
-        prefs: AppPreferences,
-        refreshCoordinator: TokenRefreshCoordinator
-    ): TokenAuthenticator = TokenAuthenticator(prefs, refreshCoordinator)
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+    }
 
     @Provides
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
-        tokenAuthenticator: TokenAuthenticator
+        loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .authenticator(tokenAuthenticator)
+            .addInterceptor(loggingInterceptor)
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(NetworkConfig.BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-    }
-
-    @Provides
-    @Singleton
-    @Named("refresh")
-    fun provideRefreshOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .build()
-    }
-
-    @Provides
-    @Singleton
-    @Named("refresh")
-    fun provideRefreshRetrofit(
-        @Named("refresh") okHttpClient: OkHttpClient,
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
         gson: Gson
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
-    @Provides
-    @Singleton
-    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
-        return retrofit.create(AuthApiService::class.java)
-    }
+    // --- API Service Providers ---
 
     @Provides
     @Singleton
-    @Named("refresh")
-    fun provideRefreshAuthApiService(@Named("refresh") retrofit: Retrofit): AuthApiService {
-        return retrofit.create(AuthApiService::class.java)
-    }
+    fun provideAuthApi(
+        retrofit: Retrofit
+    ): AuthApiService = retrofit.create(AuthApiService::class.java)
 
     @Provides
     @Singleton
-    fun provideFileApi(retrofit: Retrofit): FileApi {
-        return retrofit.create(FileApi::class.java)
-    }
+    fun provideProgramApi(
+        retrofit: Retrofit
+    ): ProgramApiService = retrofit.create(ProgramApiService::class.java)
 
     @Provides
     @Singleton
-    @Named("cloud")
-    fun provideCloudUploadOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .build()
-    }
+    fun provideFileApi(
+        retrofit: Retrofit
+    ): FileApi = retrofit.create(FileApi::class.java)
 
     @Provides
     @Singleton
-    @Named("cloud")
-    fun provideCloudUploadRetrofit(
-        @Named("cloud") okHttpClient: OkHttpClient,
-        gson: Gson
-    ): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(NetworkConfig.BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-    }
+    fun provideCloudUploadApi(
+        retrofit: Retrofit
+    ): CloudUploadApi = retrofit.create(CloudUploadApi::class.java)
 
     @Provides
     @Singleton
-    fun provideCloudUploadApi(@Named("cloud") retrofit: Retrofit): CloudUploadApi {
-        return retrofit.create(CloudUploadApi::class.java)
-    }
+    fun provideProfileApi(
+        retrofit: Retrofit
+    ): ProfileApiService = retrofit.create(ProfileApiService::class.java)
 
     @Provides
     @Singleton
-    fun provideProfileApi(retrofit: Retrofit): ProfileApiService {
-        return retrofit.create(ProfileApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideUniPapersApiService(retrofit: Retrofit): UniPapersApiService {
-        return retrofit.create(UniPapersApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideProgramApiService(retrofit: Retrofit): ProgramApiService {
-        return retrofit.create(ProgramApiService::class.java)
-    }
+    fun provideUniPapersApiService(
+        retrofit: Retrofit
+    ): UniPapersApiService = retrofit.create(UniPapersApiService::class.java)
 }

@@ -1,6 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.profile.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.unipapers.unipapers_frontend.core.domain.model.User
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileRemoteDataSource
@@ -17,29 +18,18 @@ class ProfileRepositoryImpl @Inject constructor(
 
     override suspend fun getProfile(): Result<User> {
         return try {
-            // ✅ 1. Try backend API first
             val remoteUser = remoteDataSource.getProfile()
             Result.success(remoteUser.toDomain())
         } catch (e: Exception) {
-
-            // 🔁 2. Fallback to local JSON if backend fails
-            try {
-                val jsonString = context.assets.open("profile_mock.json")
-                    .bufferedReader()
-                    .use { it.readText() }
-
-                val dto = gson.fromJson(jsonString, UserDto::class.java)
-
-                Result.success(dto.toDomain())
-
-            } catch (mockError: Exception) {
-                // ❌ If both fail, return original error
-                Result.failure(e)
-            }
+            Log.e("API_ERROR", "Failed to fetch profile", e)
+            Result.failure(e)
         }
     }
 
-    override suspend fun updateProfile(year: Int, semester: Int): Result<Unit> {
+    override suspend fun updateProfile(
+        year: Int,
+        semester: Int
+    ): Result<Unit> {
         return runCatching {
             remoteDataSource.updateProfile(year, semester)
         }
@@ -50,22 +40,24 @@ class ProfileRepositoryImpl @Inject constructor(
         newPassword: String
     ): Result<Unit> {
         return runCatching {
-            remoteDataSource.updatePassword(currentPassword, newPassword)
+            remoteDataSource.updatePassword(
+                currentPassword,
+                newPassword
+            )
         }
     }
 
-    // ✅ Mapping DTO → Domain
     private fun UserDto.toDomain() = User(
-        id = id ?: email.orEmpty(),
-        fullName = fullName.orEmpty(),
-        email = email.orEmpty(),
-        studentNumber = studentNumber.orEmpty(),
-        programme = programme.orEmpty(),
+        id = id ?: "",
+        fullName = fullName ?: "Unknown User",
+        email = email ?: "",
+        studentNumber = studentNumber ?: "N/A",
+        programme = programme ?: "Not Assigned",
         yearOfStudy = yearOfStudy ?: 1,
-        currentSemester = semester ?: 1,
-        freeViewsRemaining = 0,
-        hasUnlockedAccess = false,
-        uploadCount = uploadedPastPapersCount ?: 0,
-        downloadCount = 0
+        currentSemester = currentSemester ?: 1,
+        freeViewsRemaining = freeViewsRemaining ?: 0,
+        hasUnlockedAccess = hasUnlockedAccess ?: false,
+        uploadCount = uploadCount ?: 0
+
     )
 }
