@@ -21,12 +21,14 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -75,11 +77,13 @@ fun HomeScreen(
             onPaperClick = { viewModel.onPaperClicked(it) },
             onDownloadClick = { viewModel.onDownloadClicked(it) },
             onRetry = { viewModel.retry() },
+            onRefresh = { viewModel.onRefresh() },
             onNotificationsClick = { navController.navigate(Screen.Notifications.route) }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(
     state: HomeState,
@@ -88,119 +92,126 @@ fun HomeScreenContent(
     onPaperClick: (String) -> Unit,
     onDownloadClick: (String) -> Unit,
     onRetry: () -> Unit,
+    onRefresh: () -> Unit,
     onNotificationsClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(NearWhite)
-                .verticalScroll(scrollState)
-                .padding(bottom = 32.dp)
-        ) {
-            // Top header
-            HomeHeader(
-                unreadCount = state.unreadNotificationsCount,
-                onNotificationsClick = onNotificationsClick
-            )
-
+    PullToRefreshBox(
+        isRefreshing = state.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .offset(y = (-8).dp)
+                    .fillMaxSize()
+                    .background(NearWhite)
+                    .verticalScroll(scrollState)
+                    .padding(bottom = 32.dp)
             ) {
-                // Search bar
-                HomeSearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = onSearchQueryChanged
+                // Top header
+                HomeHeader(
+                    unreadCount = state.unreadNotificationsCount,
+                    onNotificationsClick = onNotificationsClick
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .offset(y = (-8).dp)
+                ) {
+                    // Search bar
+                    HomeSearchBar(
+                        query = state.searchQuery,
+                        onQueryChange = onSearchQueryChanged
+                    )
 
-                // Filter chips
-                FilterChipsRow(
-                    selectedFilter = state.selectedFilter,
-                    onFilterSelected = onFilterSelected
-                )
-
-                if (state.recentPapers.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
-                    HomeSectionHeading(title = "Recent Papers")
-                }
-            }
 
-            if (state.recentPapers.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                    // Filter chips
+                    FilterChipsRow(
+                        selectedFilter = state.selectedFilter,
+                        onFilterSelected = onFilterSelected
+                    )
 
-                // Horizontal scrolling paper cards
-                RecentPapersRow(
-                    papers = state.recentPapers,
-                    downloadedPaperIds = state.downloadedPaperIds,
-                    onPaperClick = onPaperClick,
-                    onDownloadClick = onDownloadClick
-                )
-            }
-
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (!state.isLoading) {
-                    if (state.errorMessage != null) {
-                        ErrorComponent(
-                            message = state.errorMessage,
-                            onRetry = onRetry
-                        )
-                    } else if (state.papers.isEmpty()) {
-                        val emptyMessage = if (state.selectedFilter != null) {
-                            "No ${state.selectedFilter.pluralName} available currently"
-                        } else {
-                            "No available past papers currently"
-                        }
-                        
-                        Text(
-                            text = emptyMessage,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            textAlign = TextAlign.Center,
-                            color = MediumGray,
-                            fontSize = 16.sp
-                        )
-                    } else {
-                        HomeSectionHeading(title = "Recommended for you")
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Course unit grid
-                        PapersGrid(
-                            papers = state.papers,
-                            downloadedPaperIds = state.downloadedPaperIds,
-                            onPaperClick = onPaperClick,
-                            onDownloadClick = onDownloadClick
-                        )
+                    if (state.recentPapers.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        HomeSectionHeading(title = "Recent Papers")
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                if (state.recentPapers.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Horizontal scrolling paper cards
+                    RecentPapersRow(
+                        papers = state.recentPapers,
+                        downloadedPaperIds = state.downloadedPaperIds,
+                        onPaperClick = onPaperClick,
+                        onDownloadClick = onDownloadClick
+                    )
+                }
+
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    if (!state.isLoading) {
+                        if (state.errorMessage != null) {
+                            ErrorComponent(
+                                message = state.errorMessage,
+                                onRetry = onRetry
+                            )
+                        } else if (state.papers.isEmpty()) {
+                            val emptyMessage = if (state.selectedFilter != null) {
+                                "No ${state.selectedFilter.pluralName} available currently"
+                            } else {
+                                "No available past papers currently"
+                            }
+                            
+                            Text(
+                                text = emptyMessage,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                textAlign = TextAlign.Center,
+                                color = MediumGray,
+                                fontSize = 16.sp
+                            )
+                        } else {
+                            HomeSectionHeading(title = "Recommended for you")
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Course unit grid
+                            PapersGrid(
+                                papers = state.papers,
+                                downloadedPaperIds = state.downloadedPaperIds,
+                                onPaperClick = onPaperClick,
+                                onDownloadClick = onDownloadClick
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
-        }
 
-        if (state.isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = SimpleBlue
-            )
-        }
+            if (state.isLoading && !state.isRefreshing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = SimpleBlue
+                )
+            }
 
-        if (state.isOpeningPdf) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color.Black.copy(alpha = 0.3f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color.White)
+            if (state.isOpeningPdf) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Black.copy(alpha = 0.3f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
                 }
             }
         }
@@ -341,6 +352,7 @@ fun HomeScreenPreview() {
         onFilterSelected = {},
         onPaperClick = {},
         onDownloadClick = {},
-        onRetry = {}
+        onRetry = {},
+        onRefresh = {}
     )
 }

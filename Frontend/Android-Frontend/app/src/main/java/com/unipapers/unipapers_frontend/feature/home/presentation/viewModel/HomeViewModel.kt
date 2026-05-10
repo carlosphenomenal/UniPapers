@@ -67,10 +67,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun loadPastPapers() {
+    private fun loadPastPapers(isRefreshing: Boolean = false) {
         lastAction = { loadPastPapers() }
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            if (isRefreshing) {
+                _state.update { it.copy(isRefreshing = true, errorMessage = null) }
+            } else {
+                _state.update { it.copy(isLoading = true, errorMessage = null) }
+            }
+            
             val result = getPastPapersUseCase(
                 query = _state.value.searchQuery,
                 filter = _state.value.selectedFilter
@@ -78,16 +83,23 @@ class HomeViewModel @Inject constructor(
             result.onSuccess { papers ->
                 _state.update { it.copy(
                     isLoading = false,
+                    isRefreshing = false,
                     papers = papers,
                     errorMessage = null
                 ) }
             }.onFailure { error ->
                 _state.update { it.copy(
                     isLoading = false,
+                    isRefreshing = false,
                     errorMessage = error.message ?: "An unknown error occurred"
                 ) }
             }
         }
+    }
+
+    fun onRefresh() {
+        loadPastPapers(isRefreshing = true)
+        loadUnreadCount()
     }
 
     fun loadUnreadCount() {
@@ -170,7 +182,7 @@ class HomeViewModel @Inject constructor(
         super.onCleared()
         try {
             getApplication<Application>().unregisterReceiver(notificationReceiver)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Receiver might not be registered
         }
     }
