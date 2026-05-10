@@ -7,6 +7,7 @@ import com.unipapers.unipapers_frontend.feature.notifications.domain.Notificatio
 interface NotificationRepository {
     suspend fun getNotifications(): Resource<List<Notification>>
     suspend fun markAsRead(publicId: String): Resource<String>
+    suspend fun deleteNotification(publicId: String): Resource<String>
     suspend fun getUnreadCount(): Resource<Long>
     suspend fun sendNotification(
         userPublicId: String?,

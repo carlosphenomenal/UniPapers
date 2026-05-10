@@ -2,26 +2,23 @@ package com.unipapers.unipapers_frontend.feature.notifications.presentation.comp
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unipapers.unipapers_frontend.core.ui.theme.Amber
@@ -37,9 +34,11 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun NotificationItem(
     notification: Notification,
+    onMarkAsRead: () -> Unit,
+    onDelete: () -> Unit,
     onClick: () -> Unit = {}
 ) {
-
+    var isExpanded by remember { mutableStateOf(false) }
     val backgroundColor = if (notification.isRead) Color.White else Color(0xFFE8F0FE)
 
     val icon: ImageVector = when (notification.type) {
@@ -60,48 +59,118 @@ fun NotificationItem(
         NotificationType.GENERAL -> NavyBlue
     }
 
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.Top
+            .animateContentSize()
+            .clickable(onClick = {
+                if (!notification.isRead) onMarkAsRead()
+                onClick()
+            }),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        // Icon circle
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(iconColor.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon circle
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(iconColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
 
-        Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-        // Message and time
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = notification.message,
-                fontSize = 14.sp,
-                fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
-                color = Color(0xFF1A1A1A),
-                lineHeight = 20.sp
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatTimeAgo(notification.createdAt),
-                fontSize = 12.sp,
-                color = Color(0xFF9E9E9E)
-            )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = notification.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NavyBlue,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = formatTimeAgo(notification.createdAt),
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
+
+                Row {
+                    if (!notification.isRead) {
+                        IconButton(
+                            onClick = onMarkAsRead,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = "Mark as read",
+                                tint = Color(0xFF43A047),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color(0xFFE53935),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+            ) {
+                Column {
+                    Text(
+                        text = notification.message,
+                        fontSize = 14.sp,
+                        fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Medium,
+                        color = Color(0xFF333333),
+                        lineHeight = 20.sp,
+                        maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    // Toggle button if message is potentially long
+                    // Simplified: always show if it might need expansion, or use a height check
+                    IconButton(
+                        onClick = { isExpanded = !isExpanded },
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (isExpanded) "Show less" else "Show more",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            }
         }
     }
 }

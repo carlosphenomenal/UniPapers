@@ -11,6 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.notifications.UniPapersFirebaseMessagingService
+import com.unipapers.unipapers_frontend.feature.notifications.domain.usecase.DeleteNotificationUseCase
 import com.unipapers.unipapers_frontend.feature.notifications.domain.usecase.GetNotificationsUseCase
 import com.unipapers.unipapers_frontend.feature.notifications.domain.usecase.MarkNotificationsReadUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class NotificationsViewModel @Inject constructor(
     application: Application,
     private val getNotificationsUseCase: GetNotificationsUseCase,
-    private val markNotificationsReadUseCase: MarkNotificationsReadUseCase
+    private val markNotificationsReadUseCase: MarkNotificationsReadUseCase,
+    private val deleteNotificationUseCase: DeleteNotificationUseCase
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(NotificationsState())
@@ -69,6 +71,10 @@ class NotificationsViewModel @Inject constructor(
 
     fun markAsRead(publicId: String) {
         viewModelScope.launch {
+            // Check if already read to avoid redundant calls
+            val notification = _state.value.notifications.find { it.id == publicId }
+            if (notification == null || notification.isRead) return@launch
+
             when (val result = markNotificationsReadUseCase(publicId)) {
                 is Resource.Success -> {
                     _state.update { currentState ->
@@ -83,6 +89,34 @@ class NotificationsViewModel @Inject constructor(
                         setPackage(getApplication<Application>().packageName)
                     }
                     getApplication<Application>().sendBroadcast(intent)
+                }
+                is Resource.Error -> {
+                    _state.update { it.copy(errorMessage = result.message) }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun deleteNotification(publicId: String) {
+        viewModelScope.launch {
+            val notification = _state.value.notifications.find { it.id == publicId }
+            val wasUnread = notification?.isRead == false
+
+            when (val result = deleteNotificationUseCase(publicId)) {
+                is Resource.Success -> {
+                    _state.update { currentState ->
+                        currentState.copy(
+                            notifications = currentState.notifications.filter { it.id != publicId }
+                        )
+                    }
+                    if (wasUnread) {
+                        // Notify Home to refresh unread count
+                        val intent = Intent(UniPapersFirebaseMessagingService.ACTION_NEW_NOTIFICATION).apply {
+                            setPackage(getApplication<Application>().packageName)
+                        }
+                        getApplication<Application>().sendBroadcast(intent)
+                    }
                 }
                 is Resource.Error -> {
                     _state.update { it.copy(errorMessage = result.message) }

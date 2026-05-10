@@ -1,5 +1,7 @@
 package com.unipapers.unipapers_frontend.feature.notifications.presentation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +22,7 @@ import androidx.navigation.NavController
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.feature.notifications.presentation.components.NotificationItem
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NotificationsScreen(
     navController: NavController,
@@ -63,10 +66,11 @@ fun NotificationsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                items(state.notifications) { notification ->
+                items(state.notifications, key = { it.id }) { notification ->
                     NotificationItem(
                         notification = notification,
-                        onClick = { viewModel.markAsRead(notification.id) }
+                        onMarkAsRead = { viewModel.markAsRead(notification.id) },
+                        onDelete = { viewModel.deleteNotification(notification.id) }
                     )
                 }
             }

@@ -17,6 +17,10 @@ class NotificationRemoteDataSource @Inject constructor(
         return apiService.markAsRead(publicId)
     }
 
+    suspend fun deleteNotification(publicId: String): Response<MessageResponseDto> {
+        return apiService.deleteNotification(publicId)
+    }
+
     suspend fun getUnreadCount(): Response<Long> {
         return apiService.getUnreadCount()
     }

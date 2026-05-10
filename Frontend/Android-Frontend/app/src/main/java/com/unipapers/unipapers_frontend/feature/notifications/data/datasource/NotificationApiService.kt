@@ -5,6 +5,7 @@ import com.unipapers.unipapers_frontend.feature.notifications.data.datasource.dt
 import com.unipapers.unipapers_frontend.feature.notifications.data.datasource.dto.SendNotificationRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -18,6 +19,11 @@ interface NotificationApiService {
 
     @PUT("notifications/mark-as-read/{publicId}")
     suspend fun markAsRead(
+        @Path("publicId") publicId: String
+    ): Response<MessageResponseDto>
+
+    @DELETE("notifications/delete/{publicId}")
+    suspend fun deleteNotification(
         @Path("publicId") publicId: String
     ): Response<MessageResponseDto>
 

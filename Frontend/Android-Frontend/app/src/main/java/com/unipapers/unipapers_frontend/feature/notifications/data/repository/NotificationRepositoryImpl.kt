@@ -46,6 +46,21 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteNotification(publicId: String): Resource<String> {
+        return try {
+            val response = remoteDataSource.deleteNotification(publicId)
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it.message) }
+                    ?: Resource.Error("Success but empty body")
+            } else {
+                val message = ErrorParser.parseErrorMessage(response, gson)
+                Resource.Error(message)
+            }
+        } catch (e: Exception) {
+            Resource.Error("Couldn't reach server. Check your internet connection.")
+        }
+    }
+
     override suspend fun getUnreadCount(): Resource<Long> {
         return try {
             val response = remoteDataSource.getUnreadCount()
