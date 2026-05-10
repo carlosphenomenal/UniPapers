@@ -7,6 +7,9 @@ import com.unipapers.unipapers_frontend.core.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.browse.domain.usecase.GetCourseNameUseCase
 import com.unipapers.unipapers_frontend.feature.browse.domain.usecase.GetPaperSignedUrlUseCase
 import com.unipapers.unipapers_frontend.feature.browse.domain.usecase.GetPapersByCourseUnitUseCase
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.DownloadStatus
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.DownloadFileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +23,9 @@ class BrowsePapersViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getCourseNameUseCase: GetCourseNameUseCase,
     private val getPapersByCourseUnitUseCase: GetPapersByCourseUnitUseCase,
-    private val getPaperSignedUrlUseCase: GetPaperSignedUrlUseCase
+    private val getPaperSignedUrlUseCase: GetPaperSignedUrlUseCase,
+    private val downloadFileUseCase: DownloadFileUseCase,
+    private val fileRepository: FileRepository
 ) : ViewModel() {
 
     private val courseCode: String = checkNotNull(savedStateHandle["courseCode"])
@@ -30,6 +35,19 @@ class BrowsePapersViewModel @Inject constructor(
 
     init {
         loadPapers()
+        observeDownloads()
+    }
+
+    private fun observeDownloads() {
+        viewModelScope.launch {
+            fileRepository.downloads.collect { downloads ->
+                val completedIds = downloads
+                    .filter { it.status == DownloadStatus.COMPLETED }
+                    .map { it.pastPaperPublicId }
+                    .toSet()
+                _state.update { it.copy(downloadedPaperIds = completedIds) }
+            }
+        }
     }
 
     private fun loadPapers() {
@@ -99,6 +117,14 @@ class BrowsePapersViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+    }
+
+    fun onDownloadClicked(paperId: String) {
+        viewModelScope.launch {
+            downloadFileUseCase(paperId).onFailure { error ->
+                _state.update { it.copy(error = error.message) }
+            }
         }
     }
 

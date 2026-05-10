@@ -9,6 +9,7 @@ data class HomeState(
     val selectedFilter: PaperType? = null,
     val recentPapers: List<Paper> = emptyList(),
     val papers: List<Paper> = emptyList(),
+    val downloadedPaperIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
     val signedUrl: String? = null,
     val isOpeningPdf: Boolean = false,

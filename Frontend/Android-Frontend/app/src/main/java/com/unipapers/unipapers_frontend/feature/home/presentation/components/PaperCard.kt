@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.Card
@@ -42,7 +43,8 @@ fun PaperCard(
     paper: Paper,
     onPaperClick: (String) -> Unit,
     onDownloadClick: (String) -> Unit,
-    modifier: Modifier = Modifier.width(180.dp)
+    modifier: Modifier = Modifier.width(180.dp),
+    isDownloaded: Boolean = false
 ) {
     Card(
         modifier = modifier
@@ -109,20 +111,37 @@ fun PaperCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFE3F2FD))
-                            .clickable { onDownloadClick(paper.id) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FileDownload,
-                            contentDescription = "Download",
-                            tint = SimpleBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    if (isDownloaded) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE8F5E9)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Downloaded",
+                                tint = Color(0xFF4CAF50),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFE3F2FD))
+                                .clickable { onDownloadClick(paper.id) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FileDownload,
+                                contentDescription = "Download",
+                                tint = SimpleBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }

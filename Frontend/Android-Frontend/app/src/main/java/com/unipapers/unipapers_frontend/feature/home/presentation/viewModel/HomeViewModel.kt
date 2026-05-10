@@ -10,6 +10,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.unipapers.unipapers_frontend.core.util.Resource
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.model.DownloadStatus
+import com.unipapers.unipapers_frontend.feature.filemanagement.domain.repository.FileRepository
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.DownloadFileUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetPastPapersUseCase
@@ -29,7 +31,8 @@ class HomeViewModel @Inject constructor(
     private val getPastPapersUseCase: GetPastPapersUseCase,
     private val getSignedUrlUseCase: GetSignedUrlUseCase,
     private val downloadFileUseCase: DownloadFileUseCase,
-    private val getUnreadCountUseCase: GetUnreadCountUseCase
+    private val getUnreadCountUseCase: GetUnreadCountUseCase,
+    private val fileRepository: FileRepository
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(HomeState())
@@ -49,6 +52,19 @@ class HomeViewModel @Inject constructor(
         loadPastPapers()
         loadUnreadCount()
         registerReceiver()
+        observeDownloads()
+    }
+
+    private fun observeDownloads() {
+        viewModelScope.launch {
+            fileRepository.downloads.collect { downloads ->
+                val completedIds = downloads
+                    .filter { it.status == DownloadStatus.COMPLETED }
+                    .map { it.pastPaperPublicId }
+                    .toSet()
+                _state.update { it.copy(downloadedPaperIds = completedIds) }
+            }
+        }
     }
 
     private fun loadPastPapers() {

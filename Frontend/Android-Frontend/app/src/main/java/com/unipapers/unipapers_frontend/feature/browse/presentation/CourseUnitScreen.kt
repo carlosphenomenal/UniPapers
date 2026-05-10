@@ -38,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.unipapers.unipapers_frontend.core.domain.model.Course
 import com.unipapers.unipapers_frontend.core.ui.theme.GrayText
 import com.unipapers.unipapers_frontend.core.ui.theme.PrimaryBlue
+import com.unipapers.unipapers_frontend.core.ui.theme.SimpleBlue
 
 @Composable
 fun CourseUnitScreen(
@@ -56,7 +57,7 @@ fun CourseUnitScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = PrimaryBlue,
+                    color = SimpleBlue,
                     shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
                 )
                 .padding(horizontal = 24.dp, vertical = 32.dp)
@@ -94,7 +95,7 @@ fun CourseUnitScreen(
             text = "Course Units",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
-                color = PrimaryBlue
+                color = SimpleBlue
             ),
             modifier = Modifier.padding(horizontal = 24.dp)
         )
@@ -155,7 +156,7 @@ fun StatItem(count: Int, label: String) {
             text = count.toString(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryBlue
+            color = SimpleBlue
         )
         Text(
             text = label,
@@ -196,7 +197,7 @@ fun CourseItemCard(
                     .fillMaxHeight()
                     .width(4.dp)
                     .background(
-                        color = PrimaryBlue,
+                        color = SimpleBlue,
                         shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
                     )
             )
@@ -220,7 +221,7 @@ fun CourseItemCard(
                     Icon(
                         imageVector = course.icon,
                         contentDescription = null,
-                        tint = PrimaryBlue,
+                        tint = SimpleBlue,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -255,7 +256,7 @@ fun CourseItemCard(
                         text = course.paperCount.toString(),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
+                        color = SimpleBlue
                     )
                 }
 
