@@ -6,8 +6,10 @@ import com.unipapers.backend.Modules.FileManagement.Dtos.FileUploadResponseDto;
 import com.unipapers.backend.Modules.FileManagement.Services.FileDeleteService;
 import com.unipapers.backend.Modules.FileManagement.Services.FileDownloadService;
 import com.unipapers.backend.Modules.FileManagement.Services.FileUploadService;
+import com.unipapers.backend.Utils.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -24,8 +26,10 @@ public class FileController {
     // This endpoint is used to initialize the upload process by creating a database record for the past paper and
     // generating a pre-signed URL for the frontend to upload the file directly to the bucket.
     @PostMapping("/init-upload")
-    public ResponseEntity<?> initializeUploadFile(@RequestBody FileUploadDto fileUploadDto) throws IOException {
-        return ResponseEntity.ok(fileUploadService.initializeUploadFile(fileUploadDto));
+    public ResponseEntity<?> initializeUploadFile(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody FileUploadDto fileUploadDto) throws IOException {
+        return ResponseEntity.ok(fileUploadService.initializeUploadFile(fileUploadDto, customUserDetails.id()));
     }
 
     // When the frontend checks the expiration time of the pre-signed url, and it is expired, it will use this

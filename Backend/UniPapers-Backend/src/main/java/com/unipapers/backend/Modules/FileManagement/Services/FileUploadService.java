@@ -1,6 +1,8 @@
 package com.unipapers.backend.Modules.FileManagement.Services;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.unipapers.backend.Common.Models.User;
+import com.unipapers.backend.Common.Repositories.UserRepo;
 import com.unipapers.backend.Exceptions.CustomExceptions.CourseNotFoundException;
 import com.unipapers.backend.Exceptions.CustomExceptions.PastPaperAlreadyExistsByHashException;
 import com.unipapers.backend.Exceptions.CustomExceptions.UnverifiedPastPapersLimitExceededException;
@@ -35,9 +37,10 @@ public class FileUploadService {
     private final CourseRepo courseRepo;
     private final R2StorageService r2StorageService;
     private final PastPaperRepo pastPaperRepo;
+    private final UserRepo userRepo;
 
     @Transactional
-    public FileUploadResponseDto initializeUploadFile(FileUploadDto fileUploadDto) throws BadRequestException {
+    public FileUploadResponseDto initializeUploadFile(FileUploadDto fileUploadDto, Long UserId) throws BadRequestException {
 
         // Check if a file with the same hash already exists
         if (pastPaperRepo.existsByFileHash(fileUploadDto.getFileHash())) {
@@ -82,6 +85,9 @@ public class FileUploadService {
                 fileUploadDto.getAcademicYear()
         );
 
+        // Fetch the user that uploaded the file
+        User user = userRepo.findById(UserId).orElseThrow(() -> new EntityNotFoundException("User not found with id: " + UserId));
+
         // Create a past paper object
         PastPaper pastPaper = PastPaper.builder()
                 .course(course)
@@ -92,6 +98,7 @@ public class FileUploadService {
                 .key(key)
                 .fileHash(fileUploadDto.getFileHash())
                 .verificationStatus(VerificationStatus.UNVERIFIED)
+                .uploadedBy(user)
                 .build();
 
         // Save the past paper to the db
