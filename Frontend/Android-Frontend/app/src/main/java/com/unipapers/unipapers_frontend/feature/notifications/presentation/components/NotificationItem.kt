@@ -39,6 +39,7 @@ fun NotificationItem(
     onClick: () -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var isOverflowing by remember { mutableStateOf(false) }
     val backgroundColor = if (notification.isRead) Color.White else Color(0xFFE8F0FE)
 
     val icon: ImageVector = when (notification.type) {
@@ -152,22 +153,27 @@ fun NotificationItem(
                         color = Color(0xFF333333),
                         lineHeight = 20.sp,
                         maxLines = if (isExpanded) Int.MAX_VALUE else 3,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { textLayoutResult ->
+                            if (!isExpanded) {
+                                isOverflowing = textLayoutResult.hasVisualOverflow
+                            }
+                        }
                     )
                     
-                    // Toggle button if message is potentially long
-                    // Simplified: always show if it might need expansion, or use a height check
-                    IconButton(
-                        onClick = { isExpanded = !isExpanded },
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (isExpanded) "Show less" else "Show more",
-                            tint = Color.Gray
-                        )
+                    if (isOverflowing || isExpanded) {
+                        IconButton(
+                            onClick = { isExpanded = !isExpanded },
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = if (isExpanded) "Show less" else "Show more",
+                                tint = Color.Gray
+                            )
+                        }
                     }
                 }
             }
