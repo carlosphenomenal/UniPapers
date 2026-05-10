@@ -1,11 +1,21 @@
 package com.unipapers.unipapers_frontend.feature.home.presentation.viewModel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.filemanagement.domain.usecase.DownloadFileUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.model.PaperType
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetPastPapersUseCase
 import com.unipapers.unipapers_frontend.feature.home.domain.usecase.GetSignedUrlUseCase
+import com.unipapers.unipapers_frontend.feature.notifications.UniPapersFirebaseMessagingService
+import com.unipapers.unipapers_frontend.feature.notifications.domain.usecase.GetUnreadCountUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,18 +25,30 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    application: Application,
     private val getPastPapersUseCase: GetPastPapersUseCase,
     private val getSignedUrlUseCase: GetSignedUrlUseCase,
-    private val downloadFileUseCase: DownloadFileUseCase
-) : ViewModel() {
+    private val downloadFileUseCase: DownloadFileUseCase,
+    private val getUnreadCountUseCase: GetUnreadCountUseCase
+) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
 
     private var lastAction: (() -> Unit)? = null
 
+    private val notificationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == UniPapersFirebaseMessagingService.ACTION_NEW_NOTIFICATION) {
+                loadUnreadCount()
+            }
+        }
+    }
+
     init {
         loadPastPapers()
+        loadUnreadCount()
+        registerReceiver()
     }
 
     private fun loadPastPapers() {
@@ -48,6 +70,19 @@ class HomeViewModel @Inject constructor(
                     isLoading = false,
                     errorMessage = error.message ?: "An unknown error occurred"
                 ) }
+            }
+        }
+    }
+
+    fun loadUnreadCount() {
+        viewModelScope.launch {
+            when (val result = getUnreadCountUseCase()) {
+                is Resource.Success -> {
+                    _state.update { it.copy(unreadNotificationsCount = result.data ?: 0L) }
+                }
+                else -> {
+                    // Fail silently for unread count
+                }
             }
         }
     }
@@ -95,5 +130,32 @@ class HomeViewModel @Inject constructor(
 
     fun resetSignedUrl() {
         _state.update { it.copy(signedUrl = null) }
+    }
+
+    private fun registerReceiver() {
+        val filter = IntentFilter(UniPapersFirebaseMessagingService.ACTION_NEW_NOTIFICATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getApplication<Application>().registerReceiver(
+                notificationReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            ContextCompat.registerReceiver(
+                getApplication(),
+                notificationReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            getApplication<Application>().unregisterReceiver(notificationReceiver)
+        } catch (e: Exception) {
+            // Receiver might not be registered
+        }
     }
 }

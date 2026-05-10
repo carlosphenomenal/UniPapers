@@ -10,31 +10,72 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.unipapers.unipapers_frontend.MainActivity
+import com.unipapers.unipapers_frontend.R
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
+import com.unipapers.unipapers_frontend.feature.notifications.domain.repository.NotificationRepository
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class UniPapersFirebaseMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var repository: NotificationRepository
+
+    @Inject
+    lateinit var prefs: AppPreferences
+
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    companion object {
+        const val ACTION_NEW_NOTIFICATION = "com.unipapers.unipapers_frontend.NEW_NOTIFICATION"
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // TODO: Send this token to the backend
-        // This is called when Firebase generates a new token for this device
-        // Carlos needs this token to send push notifications to this specific phone
+        // Save the token locally
+        prefs.saveFcmToken(token)
+        // Send this token to the backend if there is an access token in the shared preferences
         sendTokenToBackend(token)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        // Called when a push notification arrives
+        
+        // Notify the app that a new notification has been received
+        val intent = Intent(ACTION_NEW_NOTIFICATION).apply {
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+
+        // Show push notification
         remoteMessage.notification?.let { notification ->
             showNotification(
                 title = notification.title ?: "UniPapers",
                 body = notification.body ?: ""
             )
+        } ?: run {
+            // Handle data message if notification is null
+            val title = remoteMessage.data["title"]
+            val body = remoteMessage.data["body"]
+            if (title != null && body != null) {
+                showNotification(title, body)
+            }
         }
     }
 
     private fun sendTokenToBackend(token: String) {
-        // TODO: Call the backend API to save this token
-        // This will be implemented when Carlos provides the endpoint
+        val accessToken = prefs.getAccessToken()
+        if (!accessToken.isNullOrBlank()) {
+            scope.launch {
+                repository.updateFcmToken(token)
+            }
+        }
         android.util.Log.d("FCM_TOKEN", "Device token: $token")
     }
 
@@ -43,17 +84,17 @@ class UniPapersFirebaseMessagingService : FirebaseMessagingService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create notification channel for Android 8.0 and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
                 "UniPapers Notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "UniPapers general notifications"
+            }
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Create intent to open app when notification is tapped
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
@@ -63,15 +104,20 @@ class UniPapersFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Build the notification
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.unipapers_logo)
             .setContentTitle(title)
             .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

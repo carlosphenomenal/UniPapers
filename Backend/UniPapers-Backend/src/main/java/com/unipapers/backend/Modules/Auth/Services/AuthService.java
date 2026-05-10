@@ -5,6 +5,8 @@ import com.unipapers.backend.Common.Models.User;
 import com.unipapers.backend.Common.Repositories.UserRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginRequestDto;
 import com.unipapers.backend.Modules.Auth.Dtos.LoginResponseDto;
+import com.unipapers.backend.Modules.Notification.Enums.NotificationType;
+import com.unipapers.backend.Modules.Notification.Services.NotificationService;
 import com.unipapers.backend.Modules.Program.Models.Program;
 import com.unipapers.backend.Modules.Program.Repositories.ProgramRepo;
 import com.unipapers.backend.Modules.Auth.Dtos.SignupRequestDto;
@@ -47,6 +49,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final SessionRepo sessionRepo;
+    private final NotificationService notificationService;
 
     @Value("${auth.verification-code.expiry-minutes:15}")
     private long verificationCodeExpiryMinutes;
@@ -272,9 +275,12 @@ public class AuthService {
                 .refreshTokenHash(refreshTokenHash)
                 .refreshTokenExpiresAt(refreshTokenExpiresAt)
                 .deviceId(deviceId)
+                .fcmToken(request.getFcmToken())
                 .revoked(false)
                 .build();
         sessionRepo.save(session);
+
+        notificationService.sendNotification(user, "Welcome", "Thank you for logging in", NotificationType.GENERAL);
 
         return LoginResponseDto.builder()
                 .publicId(userDetails.publicId())

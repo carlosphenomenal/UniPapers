@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.feature.notifications.presentation.components.NotificationItem
@@ -23,7 +23,7 @@ import com.unipapers.unipapers_frontend.feature.notifications.presentation.compo
 @Composable
 fun NotificationsScreen(
     navController: NavController,
-    viewModel: NotificationsViewModel = viewModel()
+    viewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -64,7 +64,10 @@ fun NotificationsScreen(
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 items(state.notifications) { notification ->
-                    NotificationItem(notification = notification)
+                    NotificationItem(
+                        notification = notification,
+                        onClick = { viewModel.markAsRead(notification.id) }
+                    )
                 }
             }
         }

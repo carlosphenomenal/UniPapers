@@ -131,6 +131,7 @@ public class NotificationService {
                         }
                     }
                 });
+        log.info("Successfully sent push notification to user: {}", user.getEmail());
     }
 
     private void broadcastNotification(String title, String message) {

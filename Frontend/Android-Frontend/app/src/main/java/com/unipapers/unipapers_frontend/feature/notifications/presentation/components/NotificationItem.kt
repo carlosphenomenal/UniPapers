@@ -1,6 +1,9 @@
 package com.unipapers.unipapers_frontend.feature.notifications.presentation.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,9 +28,17 @@ import com.unipapers.unipapers_frontend.core.ui.theme.Amber
 import com.unipapers.unipapers_frontend.core.ui.theme.NavyBlue
 import com.unipapers.unipapers_frontend.feature.notifications.domain.Notification
 import com.unipapers.unipapers_frontend.feature.notifications.domain.NotificationType
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotificationItem(notification: Notification) {
+fun NotificationItem(
+    notification: Notification,
+    onClick: () -> Unit = {}
+) {
 
     val backgroundColor = if (notification.isRead) Color.White else Color(0xFFE8F0FE)
 
@@ -37,6 +48,7 @@ fun NotificationItem(notification: Notification) {
         NotificationType.PAPER_FLAGGED -> Icons.Default.Flag
         NotificationType.FLAG_RESOLVED -> Icons.Default.CheckCircle
         NotificationType.WELCOME -> Icons.Default.Notifications
+        NotificationType.GENERAL -> Icons.Default.Notifications
     }
 
     val iconColor: Color = when (notification.type) {
@@ -45,6 +57,7 @@ fun NotificationItem(notification: Notification) {
         NotificationType.PAPER_FLAGGED -> Color(0xFFE53935)
         NotificationType.FLAG_RESOLVED -> Color(0xFF43A047)
         NotificationType.WELCOME -> Amber
+        NotificationType.GENERAL -> NavyBlue
     }
 
     Row(
@@ -52,6 +65,7 @@ fun NotificationItem(notification: Notification) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(backgroundColor)
+            .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -84,10 +98,36 @@ fun NotificationItem(notification: Notification) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = notification.timeAgo,
+                text = formatTimeAgo(notification.createdAt),
                 fontSize = 12.sp,
                 color = Color(0xFF9E9E9E)
             )
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun formatTimeAgo(createdAt: String): String {
+    val instant = try {
+        Instant.parse(createdAt)
+    } catch (e: Exception) {
+        return createdAt
+    }
+
+    val now = Instant.now()
+    val duration = Duration.between(instant, now).coerceAtLeast(Duration.ZERO)
+
+    val minutes = duration.toMinutes()
+    val hours = duration.toHours()
+    val days = duration.toDays()
+
+    return when {
+        minutes < 1 -> "Just now"
+        minutes < 60 -> "${minutes}m ago"
+        hours < 24 -> "${hours}h ago"
+        days < 7 -> "${days}d ago"
+        else -> DateTimeFormatter.ofPattern("MMM d, yyyy")
+            .withZone(ZoneId.systemDefault())
+            .format(instant)
     }
 }

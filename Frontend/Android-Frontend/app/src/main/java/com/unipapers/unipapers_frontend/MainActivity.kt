@@ -34,6 +34,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 import com.google.firebase.messaging.FirebaseMessaging
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -41,16 +42,22 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var toastManager: ToastManager
 
+    @Inject
+    lateinit var prefs: AppPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Fetch FCM token
+        
+        // Fetch and save FCM token on app start
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
+                prefs.saveFcmToken(token)
                 android.util.Log.d("FCM_TOKEN", "Token: $token")
             }
         }
+
         setContent {
             UniPapersTheme {
                 val navController = rememberNavController()

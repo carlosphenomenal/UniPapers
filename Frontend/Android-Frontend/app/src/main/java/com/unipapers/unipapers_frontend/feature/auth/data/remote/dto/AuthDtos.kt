@@ -14,7 +14,8 @@ data class SignupRequestDto(
 
 data class LoginRequestDto(
     val identifier: String, // email or student number
-    val password: String
+    val password: String,
+    val fcmToken: String? = null
 )
 
 data class LoginResponseDto(

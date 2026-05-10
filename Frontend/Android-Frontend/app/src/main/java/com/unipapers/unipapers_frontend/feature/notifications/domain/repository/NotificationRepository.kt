@@ -19,4 +19,5 @@ interface NotificationRepository {
         message: String,
         notificationType: NotificationType?
     ): Resource<String>
+    suspend fun updateFcmToken(token: String): Resource<String>
 }

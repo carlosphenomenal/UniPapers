@@ -9,6 +9,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface NotificationApiService {
 
@@ -31,5 +32,10 @@ interface NotificationApiService {
     @POST("notifications/broadcast")
     suspend fun broadcastNotification(
         @Body request: SendNotificationRequestDto
+    ): Response<MessageResponseDto>
+
+    @PUT("auth/update-fcm-token")
+    suspend fun updateFcmToken(
+        @Query("token") token: String
     ): Response<MessageResponseDto>
 }

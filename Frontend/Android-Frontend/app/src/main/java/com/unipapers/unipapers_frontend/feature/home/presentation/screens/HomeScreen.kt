@@ -101,7 +101,10 @@ fun HomeScreenContent(
                 .padding(bottom = 32.dp)
         ) {
             // Top header
-            HomeHeader(onNotificationsClick = onNotificationsClick)
+            HomeHeader(
+                unreadCount = state.unreadNotificationsCount,
+                onNotificationsClick = onNotificationsClick
+            )
 
             Column(
                 modifier = Modifier
@@ -207,7 +210,10 @@ fun HomeScreenContent(
 // ─────────────────────────────────────────────
 
 @Composable
-fun HomeHeader(onNotificationsClick: () -> Unit = {}) {
+fun HomeHeader(
+    unreadCount: Long = 0,
+    onNotificationsClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,8 +229,14 @@ fun HomeHeader(onNotificationsClick: () -> Unit = {}) {
         )
         BadgedBox(
             badge = {
-                Badge(containerColor = SimpleBlue) {
-                    Text("2", fontSize = 10.sp, color = Color.White)
+                if (unreadCount > 0) {
+                    Badge(containerColor = SimpleBlue) {
+                        Text(
+                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                            fontSize = 10.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         ) {

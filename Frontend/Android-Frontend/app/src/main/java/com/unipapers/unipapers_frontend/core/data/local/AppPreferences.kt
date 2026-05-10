@@ -28,6 +28,7 @@ class AppPreferences @Inject constructor(context: Context) {
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_FCM_TOKEN = "fcm_token"
     }
 
     fun saveTokens(accessToken: String, refreshToken: String) {
@@ -97,6 +98,12 @@ class AppPreferences @Inject constructor(context: Context) {
         }
 
     fun getDeviceId(): String? = userPrefs.getString(KEY_DEVICE_ID, null)
+
+    fun saveFcmToken(token: String) {
+        userPrefs.edit { putString(KEY_FCM_TOKEN, token) }
+    }
+
+    fun getFcmToken(): String? = userPrefs.getString(KEY_FCM_TOKEN, null)
 
     private fun saveRefreshToken(refreshToken: String) {
         runCatching {

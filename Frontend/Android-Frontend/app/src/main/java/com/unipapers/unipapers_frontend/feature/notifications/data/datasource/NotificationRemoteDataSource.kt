@@ -28,4 +28,8 @@ class NotificationRemoteDataSource @Inject constructor(
     suspend fun broadcastNotification(request: SendNotificationRequestDto): Response<MessageResponseDto> {
         return apiService.broadcastNotification(request)
     }
+
+    suspend fun updateFcmToken(token: String): Response<MessageResponseDto> {
+        return apiService.updateFcmToken(token)
+    }
 }
