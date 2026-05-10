@@ -89,8 +89,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public int markAllAsRead(Long userId) {
-        return notificationRepo.markAllAsReadByUserId(userId);
+    public void markAllAsRead(Long userId) {
+        notificationRepo.markAllAsReadByUserId(userId);
     }
 
     @Transactional
