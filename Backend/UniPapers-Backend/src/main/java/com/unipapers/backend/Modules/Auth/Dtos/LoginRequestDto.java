@@ -16,4 +16,8 @@ public class LoginRequestDto {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    @NotBlank(message = "fcm token is required")
+    private String fcmToken;
+
 }

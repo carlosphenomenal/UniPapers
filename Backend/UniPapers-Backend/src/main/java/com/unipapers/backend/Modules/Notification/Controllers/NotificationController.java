@@ -36,6 +36,22 @@ public class NotificationController {
 
     }
 
+    //mark all notifications as read
+    @PutMapping("/mark-all-as-read")
+    public ResponseEntity<?> markAllAsRead(@AuthenticationPrincipal CustomUserDetails userDetails){
+        notificationService.markAllAsRead(userDetails.id());
+        return ResponseEntity.ok().body(Map.of("message", "All notifications marked as read"));
+    }
+
+    //delete a notification
+    @DeleteMapping("/delete/{publicId}")
+    public ResponseEntity<?> deleteNotification(
+            @PathVariable String publicId,
+            @AuthenticationPrincipal CustomUserDetails userDetails){
+        notificationService.deleteNotification(publicId, userDetails.id());
+        return ResponseEntity.ok().body(Map.of("message", "Notification deleted successfully"));
+    }
+
     //counting the unread
     @GetMapping("/count-unread")
     public long getUnreadCount(@AuthenticationPrincipal CustomUserDetails userDetails){

@@ -2,6 +2,7 @@ package com.unipapers.unipapers_frontend.feature.auth.presentation.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.unipapers.unipapers_frontend.core.data.local.AppPreferences
 import com.unipapers.unipapers_frontend.core.util.Resource
 import com.unipapers.unipapers_frontend.feature.auth.data.remote.dto.LoginRequestDto
 import com.unipapers.unipapers_frontend.feature.auth.domain.usecase.LoginUseCase
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val sendCodeUseCase: SendCodeUseCase
+    private val sendCodeUseCase: SendCodeUseCase,
+    private val prefs: AppPreferences
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -48,10 +50,12 @@ class LoginViewModel @Inject constructor(
     fun onSignIn() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
+            val fcmToken = prefs.getFcmToken()
             val result = loginUseCase(
                 LoginRequestDto(
                     identifier = _state.value.identifier.trim(),
-                    password = _state.value.password.trim()
+                    password = _state.value.password.trim(),
+                    fcmToken = fcmToken
                 )
             )
             when (result) {

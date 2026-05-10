@@ -12,5 +12,6 @@ data class HomeState(
     val downloadedPaperIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
     val signedUrl: String? = null,
-    val isOpeningPdf: Boolean = false
+    val isOpeningPdf: Boolean = false,
+    val unreadNotificationsCount: Long = 0
 )

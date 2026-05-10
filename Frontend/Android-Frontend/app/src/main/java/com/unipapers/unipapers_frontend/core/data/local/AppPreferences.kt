@@ -27,6 +27,8 @@ class AppPreferences @Inject constructor(context: Context) {
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USER_EMAIL = "user_email"
+        private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_FCM_TOKEN = "fcm_token"
     }
 
     fun saveTokens(accessToken: String, refreshToken: String) {
@@ -71,10 +73,11 @@ class AppPreferences @Inject constructor(context: Context) {
         }
     }
 
-    fun saveUser(userId: String, email: String) {
+    fun saveUser(userId: String, email: String, deviceId: String? = null) {
         userPrefs.edit {
             putString(KEY_USER_ID, userId)
-                .putString(KEY_USER_EMAIL, email)
+            putString(KEY_USER_EMAIL, email)
+            deviceId?.let { putString(KEY_DEVICE_ID, it) }
         }
         legacyPrefs.edit {
             remove(KEY_USER_ID)
@@ -93,6 +96,14 @@ class AppPreferences @Inject constructor(context: Context) {
             userPrefs.edit { putString(KEY_USER_EMAIL, migratedUserEmail) }
             legacyPrefs.edit { remove(KEY_USER_EMAIL) }
         }
+
+    fun getDeviceId(): String? = userPrefs.getString(KEY_DEVICE_ID, null)
+
+    fun saveFcmToken(token: String) {
+        userPrefs.edit { putString(KEY_FCM_TOKEN, token) }
+    }
+
+    fun getFcmToken(): String? = userPrefs.getString(KEY_FCM_TOKEN, null)
 
     private fun saveRefreshToken(refreshToken: String) {
         runCatching {

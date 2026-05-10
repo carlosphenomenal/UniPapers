@@ -88,6 +88,19 @@ public class NotificationService {
         notificationRepo.save(notification);
     }
 
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        notificationRepo.markAllAsReadByUserId(userId);
+    }
+
+    @Transactional
+    public void deleteNotification(String notificationPublicId, Long userId) {
+        long deleted = notificationRepo.deleteByPublicIdAndUserId(notificationPublicId, userId);
+        if (deleted == 0) {
+            throw new NotificationNotFoundException("Notification not found");
+        }
+    }
+
     public long getUnreadCount(Long userId) {
         return notificationRepo.countByUserIdAndReadFalse(userId);
     }
@@ -131,6 +144,7 @@ public class NotificationService {
                         }
                     }
                 });
+        log.info("Successfully sent push notification to user: {}", user.getEmail());
     }
 
     private void broadcastNotification(String title, String message) {

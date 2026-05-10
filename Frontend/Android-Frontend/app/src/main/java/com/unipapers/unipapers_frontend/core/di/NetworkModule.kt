@@ -11,6 +11,7 @@ import com.unipapers.unipapers_frontend.core.data.remote.interceptor.TokenRefres
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.CloudUploadApi
 import com.unipapers.unipapers_frontend.feature.filemanagement.data.datasource.FileApi
 import com.unipapers.unipapers_frontend.feature.home.data.datasource.UniPapersApiService
+import com.unipapers.unipapers_frontend.feature.notifications.data.datasource.NotificationApiService
 import com.unipapers.unipapers_frontend.feature.profile.data.datasource.ProfileApiService
 import dagger.Module
 import dagger.Provides
@@ -153,5 +154,11 @@ object NetworkModule {
     @Singleton
     fun provideProgramApiService(retrofit: Retrofit): ProgramApiService {
         return retrofit.create(ProgramApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationApiService(retrofit: Retrofit): NotificationApiService {
+        return retrofit.create(NotificationApiService::class.java)
     }
 }
